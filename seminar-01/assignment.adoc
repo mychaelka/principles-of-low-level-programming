@@ -1,0 +1,401 @@
+---
+title: "Cvičení 1: Úvodní cvičení"
+layout: "seminar"
+authors:
+  - xweiser1
+editors:
+  - xjaros1
+publish: 1
+---
+
+== Úkol 1: Vytvoření Git repozitáře pro odevzdávání domácích úkolů
+
+Pro odevzdávání domácích úkolů je potřeba založit Git repozitář ve
+fakultním GitLabu. Ve zkratce lze říct, že Git je něco jako zálohovací
+nástroj, který je vhodný pro programátory (obecně pro práci s čistým
+textem), více se dozvíte třeba
+https://www.fi.muni.cz/pb071/man/#git[tady],
+https://cs.wikipedia.org/wiki/Git[tady] a nakonec třeba i
+https://lmddgtfy.net/?q=Git[tady].
+
+. Přihlaste se do https://gitlab.fi.muni.cz/[fakultního GitLabu].
+. V levém menu vyberte položku **Projects**.
+. Klikněte na zelené tlačítko **New project**.
+. Jako název projektu zvolte **pb071** a viditelnost ponechte na privátní.
+. Přejděte na úvodní stránku projektu.
+. V levém panelu s možnostmi klikněte na **Members** (poslední položka v nabídce **Project information**).
+. Zde nastane poslední věc, kterou je nutné nastavit, a to umožnit nástroji
+  Kontr přístup pro čtení do vašeho repozitáře.
+  To provedete tak, že na kartě **Invite member** vyberete uživatele **kontr** s právem **Reporter**.
+
+== Úkol 2: Připojení na fakultní počítače
+
+Teď je potřeba, abyste si vyzkoušeli pracovat na fakultním serveru, skrz
+který se odevzdávají domácí úkoly. Fakultní server je ale vhodný i na
+testování domácích úkolů před odevzdáním -- server se může chovat trochu
+jinak než váš lapťop, což by mohlo způsobit, že vám neprojdou některé
+testy. A to nechcete.
+
+Na serveru _aisa_ běží operační systém Linux, ale není třeba se toho
+bát, na takové „domácí [.rm]#žvýkání# programování“ vám plně
+postačí pár příkazů, které si teď vyzkoušíte.
+
+
+=== První fáze: Připojení
+
+Pokud používáte OS **Windows**, potřebujete spustit program _Putty_.
+Na školních počítačích je již k dispozici, program lze stáhnout třeba
+http://www.putty.org/[tady]. Je třeba zadat adresu __aisa.fi.muni.cz__
+(pokud budete ve fakultní síti -- `wlan_fi`, `eduroam` -- , pak stačí jenom
+__aisa__) a připojit se. Terminálové okno se ještě zeptá na vaše
+přihlašovací údaje, které vyplníte. Nelekněte se, že se při zadávání
+hesla nezobrazují žádné znaky -- je to bezpečnostní opatření.
+
+Pokud jste na **Linuxu**, pak postačí v terminálu (terminál naleznete ve
+„start“ nabídce) spustit:
+
+[source,bash]
+---------
+ssh aisa
+---------
+
+Pokud vám přijde, že je otrava při každém přihlášení zadávat jméno a
+heslo, když to „přece jste **vy**“, pak vězte, že to jde nastavit tak,
+https://www.fi.muni.cz/pb071/man/#ssh-keys[ abyste nemuseli nic zadávat].
+
+=== Druhá fáze: Základní příkazy
+
+Nejprve zjistěte, co máte ve svém domovském adresáři. To uděláte
+příkazem `ls`.
+
+Teď si nastavte v Gitu svoje jméno a e-mail, které se zobrazují s commity:
+
+[source,bash]
+--------------------------------------------------
+git config --global user.name "Jméno Příjmení"
+git config --global user.email "‹xlogin›@fi.muni.cz"
+--------------------------------------------------
+
+`Jméno`, `Příjmení` a `‹xlogin›` nahraďte skutečnými hodnotami.
+
+Následně si stáhněte svůj repozitář z GitLabu:
+
+[source,bash]
+------------------------------------------------------------
+git clone https://‹xlogin›@gitlab.fi.muni.cz/‹xlogin›/pb071.git
+------------------------------------------------------------
+
+Po zadání hesla se vám stáhne (zatím) prázdný repozitář do nově
+vytvořeného adresáře _pb071_. Do adresáře vstoupíte pomocí příkazu
+`cd pb071`. Teď ale můžete využít skvělé vychytávky terminálu --
+klávesy kbd:[TAB]. Stačí, když zadáte `cd p` a stisknete tabulátor. Pokud
+existuje pouze jeden adresář se jménem začínajícím na `p`, terminál
+doplní zbytek názvu. V opačném případě dalším stiskem kbd:[TAB] zobrazíte
+všechny takové adresáře a postupným prolínáním dopisování názvu a stisků
+klávesy kbd:[TAB] se dostanete ke kýženému výsledku.
+
+. Dobrou praktikou při zakládání Git repozitáře je ihned začít prvním
+  commitem (verzí). Někdy se pro tento účel vytváří soubor `README` s popisem
+  projektu, který se však pak často mění. Čistší možnost je vytvořit první
+  verzi __prázdnou__. Díky tomu se lze v historii vrátit až k úplnému začátku
+  projektu, kdy byl prázdný. To dělá příkaz
++
+[source,bash]
+--------------------------------------------
+git commit --allow-empty -m 'Initial commit'
+--------------------------------------------
++
+Git normálně prázdný commit vytvořit nedovolí, protože v jiných situacích
+nedává smysl. Přepínač `--allow-empty` se proto používá pouze při zakládání
+projektu. Za přepínačem `-m` pak následuje zpráva, která popisuje novou verzi.
+První verze projektu se typicky volá _Initial commit_.
+
+. Nyní přidáte do repozitáře soubor `.gitignore`, více se o něm se dozvíte
+  na konci této stránky nebo v https://www.fi.muni.cz/pb071/man/#gitignore[manuálu].
+  Pro jeho stáhnutí z webu do aktuálního adresáře využijte příkaz
++
+[source,bash]
+------------------------------------------------------------
+wget https://www.fi.muni.cz/pb071/download/gitignore -O .gitignore
+------------------------------------------------------------
++
+kde argumentem je adresa k https://www.fi.muni.cz/pb071/download/gitignore[našemu `.gitignore`],
+který silně doporučujeme a `-O .gitignore` značí, že má být uložený do souboru
+`.gitignore`. Tento soubor však není ve výchozím stavu viditelný, protože je _skrytý_:
++
+--
+.. Terminál: pro zobrazení obsahu adresáře i se skrytými soubory použijte příkaz `ls -A`.
+.. Správce souborů: zobrazování skrytých souborů je třeba ručně zapnout.
+--
++
+Aby byl soubor `.gitignore` dostupný i v jiných kopiích (klonech) repozitáře,
+je potřeba Gitu říct, aby jej přidal do nové verze projektu.
+To docílíte následující dvojici příkazů:
++
+[source,bash]
+-----------------------------
+git add .gitignore
+git commit -m 'Add gitignore'
+-----------------------------
++
+První příkaz přidá soubor `.gitignore` do seznamu změn pro budoucí verzi.
+Další změny přidávat nebudeme, a vytvoříme novou verzi druhým příkazem.
+`git commit` se zde objevuje znovu, tentokrát však bez přepínače
+`--allow-empty`.
+
+. V adresáři _pb071_ si vytvořte adresář _hello_ pomocí příkazu `mkdir hello` a vstupte do něj.
+. Teď si zkuste vytvořit soubor _hello.c_, k čemuž využijete příkaz `touch hello.c`.
+. Pokud si jeho obsah vypíšete  příkazem `cat hello.c`, zjistíte, že je prázdný.
+. Nějaký obsah do něho dostanete takto: `echo '#include <stdio.h>' > hello.c`.
+. Kontrolou pomocí příkazu `cat hello.c` si ověříte, že teď už soubor není prázdný.
+
+Pokud chcete soubor editovat, napište příkaz `nano hello.c`. Spustí
+se jednoduchý textový terminálový editor. Ovládá se pomocí klávesových
+příkazů, kdy základní příkazy vidíte ve spodní části okna. `^O`
+znamená kbd:[Ctrl] + kbd:[O]. Existují i sofistikovanější terminálové editory, ale
+zpočátku se spokojíte s tímto. Do souboru vložte následující obsah:
+
+[source,c]
+----
+#include <stdio.h>
+
+int main(void)
+{
+    printf("Hello World\n");
+    return 0;
+}
+----
+
+Když máte hotový program, je na čase jej přeložit. To provedete příkazem
+`gcc -std=c99 -o mojeHello hello.c`. Tento příkaz je už trochu
+složitější, ale budete se s ním během semestru setkávat tak často, že
+vám to pak už ani nepřijde.
+
+Pokud se vám podařilo program přeložit, můžete ho spustit:
+`./mojeHello` (s výhodou se dá použít tabulátor na doplnění jména souboru).
+
+=== Třetí fáze: Nahrání změn do repozitáře
+
+Každá změna souboru se může v repozitáři nacházet v jednom z
+následujících stavů:
+
+* rozpracovaná, nebude v příštím commitu -- *modified*
+* připravená, bude v příštím commitu -- *staged*
+* lokálně uložená -- *commited*
+** uložená i na GitLabu -- *pushed*
+
+Stav se mění pomocí editoru a rozličných Gitových příkazů. Ty
+nejzákladnější jsou:
+
+* **`git status`** -- Zjistíte, v jakém stavu se vám nacházejí soubory, tedy jestli se něco změnilo:
+** vypíše soubory, u kterých jsme zatím nesledovali změny (*untracked*),
+** soubory, v kterých jsme udělali změny, ale nepatří do následujícího commitu (*modified, not staged for commit*),
+** soubory, které jsme zařadili do následujícího commitu (*staged*).
+* **`git diff`** -- Zjistíte, co přesně se změnilo od posledního commitu -- verze repozitáře.
+* **`git add hello.c`** -- Zařadí změny v souboru _hello.c_ do dalšího commitu -- změny budou označeny ako připravené.
+* **`git commit -m "úloha hello"`** -- Uloží všechny připravené změny -- vytvoří novou verzi.
+* **`git push`** -- Uloží veškeré commity na fakultní server.
+
+Přidejte vámi vytvořený soubor do připravených pomocí `git add hello.c`.
+Proveďte _commit_ a _push_.
+
+== Úkol 3: Odevzdání testovacího domácího úkolu
+
+Když se vám podařilo vytvořit, „commitnout“ a „pushnout“ program, je na
+čase ho zkusit odevzdat. To provedete následujícím příkazem:
+
+[source,bash]
+----
+/home/kontr/odevzdavam pb071 hello nanecisto
+----
+
+Teď už stačí jenom počkat, až Kontr vyhodnotí vaši úlohu.
+Režim nanečisto spouští velmi omezenou sadu testů, které mají sloužit
+pouze pro kontrolu, že neděláte něco velmi špatně. Při velkých
+domácích úkolech se očekává, že si svoje řešení otestujete před odevzdáním
+sami.
+
+Pokud jste s výsledky testu `nanečisto` spokojeni, zkuste ještě režim odevzdání
+`naostro`, za který můžete při splnění testu získat 1 bonusový bod:
+
+[source,bash]
+----
+/home/kontr/odevzdavam pb071 hello naostro
+----
+
+TIP: Po doručení úspěšného hodnocení byste měli v poznámkovém bloku v IS MU najít i bodové hodnocení.
+
+Více o příkazu na odevzdávání domácích úloh naleznete
+https://www.fi.muni.cz/pb071/info/homeworks.html#odevzdani[zde].
+
+== Úkol 4: Formátovaný výpis
+
+Jako poslední úkol tohoto týdne si zkusíme něco naprogramovat. Podstatnou částí
+všech programů, které budete kdy programovat je předání informací uživateli.
+Počítač pro svoji práci používá téměř výhradně binární podobu dat, které zvládá
+rozumět, nicméně pro uživatele nebo programátora jsou data v takovém formátu
+většinou nesrozumitelná. Proto je potřebné umět různé typy informací transformovat
+a převádět do člověku srozumitelné formy.
+
+Nejzákladnější formou, se kterou budeme v rámci tohoto předmětu nejčastěji pracovat,
+je textová reprezentace. Jedná se o formát zápisu dat, který využívá znaky ASCII tabulky.
+Pro převod interní reprezentace informací na textová data budeme v rámci tohoto předmětu nejčastěji
+používat funkce z rodiny `printf` resp. `scanf`, které s pomocí tzv. formátovacího řetězce, dokáží
+převést požadované proměnné do textové podoby a vypsat je v zadaném formátu.
+
+Více o funkcích s formátovacími řetězci naleznete v http://en.cppreference.com/w/c/io/fprintf[dokumentaci C na cppreference],
+příklad je uvedený na konci.
+
+Z odkazu na začátku cvičení si stáhněte kostru a rozbalte ji.
+V souboru `printer.c` jsou deklarovány následující proměnné:
+
+[source,c]
+----
+int number = 12;
+long long long_number = 0x27BFE;
+double floating_number = 2.71828182;
+char single_char = 'A';
+char string[] = "This is string";
+----
+
+Vaším úkolem bude vytvořit formátovací řetězce kterými vypíšete výše
+uvedené proměnné ve tvaru
+
+[source]
+--------------------------------------------------------------
+Number is: 12
+Long number is: 27bfe in hexadecimal
+Long number is: 162814 in decimal
+Floating number is: 2.71828182
+Floating number is: 2.7182 with precision to 4 decimal places
+Char is: 'A'
+String is: "This is string"
+--------------------------------------------------------------
+
+Tyto řetězce vypište do připravených funkcí `printf` v souboru
+printer.c
+
+
+Po dopsání těchto formátovacích značek, můžete svůj kód zkompilovat.
+
+=== Formátovací značky
+
+Pro vypisování dat pomocí funkcí s formátovacími řetězci (např. `printf`)
+budete využívat nejčastěji:
+
+* `%d` vypíše číslo typu `int` v desítkové reprezentaci
+* `%x` vypíše číslo typu `unsigned int` v šestnáctkové reprezentaci
+* `%lld` vypíše číslo typu `long long` v desítkové reprezentaci
+* `%llx` vypíše číslo typu `unsigned long long` v šestnáctkové reprezentaci
+* `%f` vypíše číslo typu `float` jako desetinné číslo
+* `%lf` vypíše číslo typu `double` jako desetinné číslo
+* `%c` vypíše jeden znak typu `char`
+* `%s` vypíše řetězec typu `char *` nebo `char []`
+
+Všem těmto značkám lze ještě specifikovat číselně jejich minimální
+šířku, která se uvádí před značku.
+
+* `%5d` značí, že dané číslo bude vypsáno nejméně na pěti znacích, pokud je
+  výsledná reprezentace kratší, výpis je zleva vyplněn znaky mezery, například:
+**  `Number: |%5d|` vypíše `Number: |{nbsp}{nbsp}{nbsp}25|`
+** `String: |%10s|` vypíše `String: |{nbsp}{nbsp}{nbsp}{nbsp}{nbsp}{nbsp}Ahoj|`
+** `String: |%3s|`  vypíše `String: |Ahoj|`
+* Značkám pro čísla s plovoucí desetinnou čárkou lze navíc specifikovat
+  přesnost na počet vypsaných desetinných míst, například
+**  `Pi is: |%.2f|` vypíše `Pi is: |3.14|`
+** `Pi is: |%7.2f|` vypíše `Pi is: |{nbsp}{nbsp}{nbsp}3.14|`
+** `Pi is: |%2.2f|` vypíše `Pi is: |3.14|`
+
+Pokud potřebujete v řetězci použít znak `"` můžete využít speciálního
+znaku `\`, který ruší řídící charakter znaku za ním, například,
+řetězec obsahující uvozovku bude vypadat následovně `"\""`, řetězec
+obsahující zpětné lomítko potom bude vypadat takto `"\\"`.
+
+== Další zdroje a informace
+
+Tato sekce doplňuje cvičení o další zdroje a informace, které vám mohou pomoci
+při implementaci tohoto cvičení. Zde již žádné úkoly nehledejte.
+
+=== Další zajímavé Gitové příkazy
+
+* **`git reset hello.c`** -- Tímto příkazem přesunete soubor _hello.c_ zpět
+  ze stavu připravený do stavu rozpracovaný. +
+* **`git pull`** -- Zkontrolujete, jestli a jak se liší váš lokální repozitář
+  od toho na serveru, a stáhnete případné změny.
+* **`git pull --rebase`** -- Vytvořili jste commit, který jste chtěli uložit
+  na server, ale příkaz `git push` selhal, protože _Updates were rejected
+  because the tip of your current branch is behind its remote counterpart_.
+* **`git checkout -- cesta/k/souboru`** -- Udělali jste změny v soubor,
+  které ale chcete vrátit do stavu „jako na začátku“.
+* **`git reset --soft HEAD~1`** -- Udělali jste commit, který je špatný, a
+  rádi byste se ho zbavili (změna stavu z uložený na připravený).
+* **`git log`** -- Zobrazí historii commitů.
+* **`git stash`** -- Udělali jste změny, které si chcete na moment odložit.
+* **`git stash pop`** -- Chcete si opět pracovat na odložených změnách.
+
+=== Další šikovné linuxové příkazy
+
+* Chcete něco zkopírovat? `cp _co_ _kam_`
+* Chcete něco přejmenovat/přesunout? `mv _co_ _kam_`
+* Chcete smazat soubor? `rm _co_`
+* Chcete smazat složku? `rm -rf _co_` (**POZOR** -- opravdu to smaže všechno, používejte s rozmyslem)
+* Chcete se dostat do domovského adresáře? Stačí zadat `cd`
+
+Všechny příkazy jsou uvedeny v https://www.fi.muni.cz/pb071/man/#linux-bash-commands[manuálu].
+
+==== Porovnávání souborů
+
+Linux je velmi dobrý systém pro práci s textovými soubory. Co se vám
+bude velmi hodit, je textové porovnání dvou souborů. Zkuste si teď
+udělat malé demo:
+
+. Skočte do složky `~/pb071/hello/` pokud v ní ještě nejste.
+. Vytvořte soubor `expected.txt` s obsahem _Hello World!_. Například takto:
+  `echo 'Hello World!' > expected.txt`
+. Přesměrujte výstup programu _./mojeHello_ do souboru _result.txt_. To
+  provedete takto: `./mojeHello > result.txt`
+. Zjistěte, jestli se soubory liší, příkazem `diff -c expected.txt result.txt`
+  Co z toho vyčtete?
+. Opravte program tak, aby vypisoval to, co je v souboru _expected.txt_.
+  Co vypíše příkaz `diff`?
+
+[source,diff]
+---------------------------------------------------------
+$ diff -c expected.txt result.txt
+*** expected.txt 2016-01-14 10:37:11.000000000 +0100
+--- result.txt  2016-01-14 10:37:40.000000000 +0100
+***************
+*** 1 ****
+! Hello World!
+--- 1 ----
+! Hello World`
+---------------------------------------------------------
+
+==== Co vůbec dělá zobátko?
+
+Jednoduché zobátko doprava způsobí, že se výstup programu zapíše do
+souboru, místo toho, aby se vypsal na obrazovku. Když zobátko obrátíte,
+pak spuštěný program dostane obsah souboru na vstup -- jako byste to
+psali na klávesnici vy.
+
+Pokud byste chtěli převést do souboru chybový výstup programu, provede
+se to takto: `program 2> chybovy_vystup.txt`
+
+Pokud byste chtěli jenom přidat na konec souboru, použijete dvě zobátka
+namísto jednoho.
+
+=== K čemu je magický .gitignore?
+
+Při programování větších aplikací se vám častokrát stane, že při překladu,
+testování, nebo při práci s IDE vygenerujete soubory, které nejsou nezbytné
+pro překlad, běh nebo vývoj programu. Případně, jako je tomu u jazyka C,
+vznikají překladem přesně definované soubory, které jsou vytvářeny pro váš počítač
+s na něm nainstalovaným OS a nemusejí obecně fungovat. Takové soubory ve většině
+případů nechceme s ostatními sdílet, ale naopak chceme aby byly při verzování
+zdrojového kódu __ignorovány__.
+
+A přesně tohle má na starosti _.gitignore_ -- popisuje pravidla pro git, tedy soubory,
+které nemají být označeny pro commit (budou ignorovány) kdykoliv použijete příkaz `git add`.
+
+Silně doporučujeme použít ve vašem repozitáři námi dodaný _.gitignore_, pomůže vám
+vyhnout se mnoha nepříjemnostem při odevzdávání domácích úkolů.
