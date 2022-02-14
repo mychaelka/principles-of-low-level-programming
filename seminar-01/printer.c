@@ -9,13 +9,13 @@ int main(void)
     char string[] = "This is string";
 
     /* Zde definujte formatovaci retezce */
-    printf("", number);
-    printf("", long_number);
-    printf("", long_number);
-    printf("", floating_number);
-    printf("", floating_number);
-    printf("", single_char);
-    printf("", string);
+    printf("Number is: %d\n", number);
+    printf("Long number is: %llx in hexadecimal\n", long_number);
+    printf("Long number is %lld in decimal\n", long_number);
+    printf("Floating number is: %lf\n", floating_number);
+    printf("Floating number is: %.4lf with precision to 4 decimal places\n", floating_number);
+    printf("Char is: '%c'\n", single_char);
+    printf("String is: \"%s\"\n", string);
 
     return 0;
 }
