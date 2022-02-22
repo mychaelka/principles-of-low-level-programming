@@ -66,7 +66,7 @@ void draw_ellipse(int aAxis, int bAxis, char fill, char space)
 
     int i;
     int j;
-    for (i = 0; i < 2*bAxis; i++){ // i je y, j je x suradnica
+    for (i = 0; i <= 2*bAxis; i++){ // i je y, j je x suradnica
         for (j = 0; j <= 2*aAxis; j++){
             if ( ((j - aAxis)*(j - aAxis))*(bAxis*bAxis) + ((i - bAxis)*(i - bAxis))*(aAxis*aAxis)
             >= bAxis*bAxis*aAxis*aAxis){
