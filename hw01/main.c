@@ -9,16 +9,61 @@ void print_error_message(char *message)
     fprintf(stderr, "%s\n", message);
 }
 
-
-
 void print_result();
 void change_base();
+
+
+int64_t read_next_number(long acc, int read)
+{
+    int64_t out = 0;
+    int digit = getchar();
+    while ((digit >= '0' && digit <= '9') || isspace(digit)) {
+        int num = digit - '0';
+
+        if (!isspace(digit)){ // this works for now - leave it be
+            out *= 10;
+            out += num;
+        }
+        digit = getchar();
+    }
+
+    if (read == '+'){
+        acc += out;
+        printf("# %ld\n", acc);
+    }
+
+    if (read == '*'){
+        acc *= out;
+        printf("# %ld\n", acc);
+    }
+
+    if (read == '-'){
+        acc -= out;
+        printf("# %ld\n", acc);
+    }
+
+    if (read == 'P'){
+        acc = out;
+        printf("# %ld\n", acc);
+    }
+
+    if (digit == '=' || digit == ';') {
+        printf("# %ld\n", acc);
+    }
+    return acc;
+}
+
 
 void read()
 {
     int64_t acc = 0;
     int ch;
     while ((ch=getchar()) != EOF){ // 1 loop = loading of 1 character from stdin
+        if (ch == 'N'){
+            acc = 0;
+            printf("# %ld\n", acc);
+        }
+
         if (ch == ';'){ // in case of ';' continue
             continue;
         }
@@ -27,20 +72,8 @@ void read()
             printf("# %ld\n", acc);
         }
 
-        if (ch == 'P'){
-            acc = 0;
-            ch = getchar();
-            while ((ch >= '0' && ch <= '9') || isspace(ch)) {
-                int num = ch - '0';
-                if (!isspace(ch)){ // this works for now - leave it be
-                    acc *= 10;
-                    acc += num;
-                }
-                ch = getchar();
-            }
-            if (ch == ';' || ch == '='){ // in case of '=' print acc and continue
-                printf("# %ld\n", acc);
-            }
+        if (ch == 'P' || ch == '+' || ch == '*' || ch == '-'){
+            acc = read_next_number(acc,ch);
         }
     }
 }
