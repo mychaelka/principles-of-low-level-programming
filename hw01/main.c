@@ -15,15 +15,28 @@ void change_base();
 int64_t read_command(long acc, int last_op) // acc = 0 at first
 {
     int current = getchar();
+    int last_nonempty = last_op;
     //int last_op = 'P';
     while (current != ';' && current != '='){
         int64_t out = 0;
+
+        if (!(last_nonempty >= '0' && last_nonempty <= '9')){
+            if (!isspace(current) && !(current >= '0' && current <= '9')){
+                print_error_message("SYNTAX ERROR");
+                return acc;
+            }
+        }
+
+        //if (!isspace(current)){
+        //    last_nonempty = current;
+        //}
 
         // reading numbers and whitespaces
         while ((current >= '0' && current <= '9') || isspace(current)) {
             int num = current - '0';
 
             if (!isspace(current)){
+                last_nonempty = current;
                 out *= 10;
                 out += num;
             }
@@ -32,19 +45,19 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
         if (last_op == 'P'){
             acc = out;
         }
-        if (last_op == '+'){
+        else if (last_op == '+'){
             acc += out;
         }
-        if (last_op == '-'){
+        else if (last_op == '-'){
             acc -= out;
         }
-        if (last_op == '*'){
+        else if (last_op == '*'){
             acc *= out;
         }
-        if (last_op == '/'){
+        else if (last_op == '/'){
             acc /= out;
         }
-        if (last_op == '%'){
+        else if (last_op == '%'){
             acc %= out;
         }
 
@@ -65,13 +78,13 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
 
         current = getchar();
     }
-
+    printf("last nonempty is %c\n", last_nonempty);
     printf("# %ld\n", acc);
     return acc;
 }
 
 
-void read()
+bool calculate(void)
 {
     int64_t acc = 0;
     int ch;
@@ -81,27 +94,29 @@ void read()
             printf("# %ld\n", acc);
         }
 
-        if (ch == ';'){ // in case of ';' continue
+        else if (ch == ';'){ // in case of ';' continue
             continue;
         }
 
-        if (ch == '='){ // in case of '=' print acc and continue
+        else if (ch == '='){ // in case of '=' print acc and continue
             printf("# %ld\n", acc);
         }
 
-        if (ch == 'P'){
+        else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%'){
             acc = read_command(acc, ch);
         }
+
+        else if (isspace(ch)){
+            continue;
+        }
+
+        else {
+            print_error_message("SYNTAX ERROR");
+            return false;
+        }
     }
-}
 
-bool calculate(void)
-{
-    read();
-
-    print_error_message("SYNTAX ERROR");
-
-    return false;
+    return true;
 }
 
 int main(void)
