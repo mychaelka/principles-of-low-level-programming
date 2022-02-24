@@ -16,22 +16,27 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
 {
     int current = getchar();
     int last_nonempty = last_op;
-    //int last_op = 'P';
     while (current != ';' && current != '='){
         int64_t out = 0;
 
+        if (isspace(current)){  // ignore whitespaces
+            current = getchar();
+            continue;
+        }
+
+        if (current == EOF){
+            printf("# %ld\n", acc);
+            exit(0);
+        }
+
         if (!(last_nonempty >= '0' && last_nonempty <= '9')){
-            if (!isspace(current) && !(current >= '0' && current <= '9')){
+            if (!(isspace(current) || (current >= '0' && current <= '9'))){
                 print_error_message("SYNTAX ERROR");
-                return acc;
+                exit(1);
             }
         }
 
-        //if (!isspace(current)){
-        //    last_nonempty = current;
-        //}
-
-        // reading numbers and whitespaces
+        // reading numbers with whitespaces
         while ((current >= '0' && current <= '9') || isspace(current)) {
             int num = current - '0';
 
@@ -42,6 +47,7 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
             }
             current = getchar();
         }
+
         if (last_op == 'P'){
             acc = out;
         }
@@ -55,6 +61,10 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
             acc *= out;
         }
         else if (last_op == '/'){
+            if (out == 0){
+                print_error_message("DIVISION BY ZERO");
+                exit(1);
+            }
             acc /= out;
         }
         else if (last_op == '%'){
@@ -65,6 +75,7 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
         if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%'){
             printf("# %ld\n", acc);
             last_op = current;
+            last_nonempty = current;
             current = getchar();
             continue;
         }
@@ -73,12 +84,18 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
             break;
         }
         if (current == ';'){
+            while (current != '\n') {
+                current = getchar();
+            }
             break;
         }
 
         current = getchar();
+        if (!isspace(current)) {
+            last_nonempty = current;
+        }
     }
-    printf("last nonempty is %c\n", last_nonempty);
+
     printf("# %ld\n", acc);
     return acc;
 }
@@ -95,6 +112,9 @@ bool calculate(void)
         }
 
         else if (ch == ';'){ // in case of ';' continue
+            while (ch != '\n') {
+                ch = getchar();
+            }
             continue;
         }
 
