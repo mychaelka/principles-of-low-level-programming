@@ -9,47 +9,64 @@ void print_error_message(char *message)
     fprintf(stderr, "%s\n", message);
 }
 
-void print_result();
 void change_base();
 
 
-int64_t read_next_number(long acc, int read)
+int64_t read_command(long acc, int last_op) // acc = 0 at first
 {
-    int64_t out = 0;
-    int digit = getchar();
-    while ((digit >= '0' && digit <= '9') || isspace(digit)) {
-        int num = digit - '0';
+    int current = getchar();
+    //int last_op = 'P';
+    while (current != ';' && current != '='){
+        int64_t out = 0;
 
-        if (!isspace(digit)){ // this works for now - leave it be
-            out *= 10;
-            out += num;
+        // reading numbers and whitespaces
+        while ((current >= '0' && current <= '9') || isspace(current)) {
+            int num = current - '0';
+
+            if (!isspace(current)){
+                out *= 10;
+                out += num;
+            }
+            current = getchar();
         }
-        digit = getchar();
+        if (last_op == 'P'){
+            acc = out;
+        }
+        if (last_op == '+'){
+            acc += out;
+        }
+        if (last_op == '-'){
+            acc -= out;
+        }
+        if (last_op == '*'){
+            acc *= out;
+        }
+        if (last_op == '/'){
+            acc /= out;
+        }
+        if (last_op == '%'){
+            acc %= out;
+        }
+
+        // when next character is an operator
+        if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%'){
+            printf("# %ld\n", acc);
+            last_op = current;
+            current = getchar();
+            continue;
+        }
+        if (current == '='){
+            printf("# %ld\n", acc);
+            break;
+        }
+        if (current == ';'){
+            break;
+        }
+
+        current = getchar();
     }
 
-    if (read == '+'){
-        acc += out;
-        printf("# %ld\n", acc);
-    }
-
-    if (read == '*'){
-        acc *= out;
-        printf("# %ld\n", acc);
-    }
-
-    if (read == '-'){
-        acc -= out;
-        printf("# %ld\n", acc);
-    }
-
-    if (read == 'P'){
-        acc = out;
-        printf("# %ld\n", acc);
-    }
-
-    if (digit == '=' || digit == ';') {
-        printf("# %ld\n", acc);
-    }
+    printf("# %ld\n", acc);
     return acc;
 }
 
@@ -72,8 +89,8 @@ void read()
             printf("# %ld\n", acc);
         }
 
-        if (ch == 'P' || ch == '+' || ch == '*' || ch == '-'){
-            acc = read_next_number(acc,ch);
+        if (ch == 'P'){
+            acc = read_command(acc, ch);
         }
     }
 }
