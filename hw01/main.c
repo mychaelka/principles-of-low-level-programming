@@ -9,15 +9,13 @@ void print_error_message(char *message)
     fprintf(stderr, "%s\n", message);
 }
 
-void change_base();
 
-
-int64_t read_command(long acc, int last_op) // acc = 0 at first
+unsigned long long int read_command(unsigned long long int acc, int last_op) // acc = 0 at first
 {
     int current = getchar();
     int last_nonempty = last_op;
     while (current != ';' && current != '='){
-        int64_t out = 0;
+        unsigned long long int out = 0;
 
         if (isspace(current)){  // ignore whitespaces
             current = getchar();
@@ -25,7 +23,7 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
         }
 
         if (current == EOF){
-            printf("# %ld\n", acc);
+            printf("# %llu\n", acc);
             exit(0);
         }
 
@@ -73,14 +71,14 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
 
         // when next character is an operator
         if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%'){
-            printf("# %ld\n", acc);
+            printf("# %llu\n", acc);
             last_op = current;
             last_nonempty = current;
             current = getchar();
             continue;
         }
         if (current == '='){
-            printf("# %ld\n", acc);
+            printf("# %llu\n", acc);
             break;
         }
         if (current == ';'){
@@ -94,21 +92,22 @@ int64_t read_command(long acc, int last_op) // acc = 0 at first
         if (!isspace(current)) {
             last_nonempty = current;
         }
+
     }
 
-    printf("# %ld\n", acc);
+    printf("# %llu\n", acc);
     return acc;
 }
 
 
 bool calculate(void)
 {
-    int64_t acc = 0;
+    unsigned long long int acc = 0;
     int ch;
     while ((ch=getchar()) != EOF){ // 1 loop = loading of 1 character from stdin
         if (ch == 'N'){
             acc = 0;
-            printf("# %ld\n", acc);
+            printf("# %llu\n", acc);
         }
 
         else if (ch == ';'){ // in case of ';' continue
@@ -119,7 +118,7 @@ bool calculate(void)
         }
 
         else if (ch == '='){ // in case of '=' print acc and continue
-            printf("# %ld\n", acc);
+            printf("# %llu\n", acc);
         }
 
         else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%'){
