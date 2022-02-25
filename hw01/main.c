@@ -27,23 +27,21 @@ unsigned long long int read_command(unsigned long long int acc, int last_op) // 
             exit(0);
         }
 
-        if (!(last_nonempty >= '0' && last_nonempty <= '9')){
-            if (!(isspace(current) || (current >= '0' && current <= '9'))){
-                print_error_message("SYNTAX ERROR");
-                exit(1);
-            }
-        }
-
         // reading numbers with whitespaces
         while ((current >= '0' && current <= '9') || isspace(current)) {
             int num = current - '0';
 
             if (!isspace(current)){
-                last_nonempty = current;
                 out *= 10;
                 out += num;
             }
+
             current = getchar();
+
+            // if there is a different character than space, assign it to last nonempty (e.g. 50 + 7a)
+            //if (!isspace(current)) {
+           //     last_nonempty = current;
+            //}
         }
 
         if (last_op == 'P'){
@@ -68,12 +66,27 @@ unsigned long long int read_command(unsigned long long int acc, int last_op) // 
         else if (last_op == '%'){
             acc %= out;
         }
+        else if (last_op == '<'){
+            acc <<= out;
+        }
+        else if (last_op == '>'){
+            acc >>= out;
+        }
+
+        if (!(last_nonempty >= '0' && last_nonempty <= '9')){
+            if ((!(isspace(current)) || !(current >= '0' && current <= '9'))){
+                printf("# %llu\n", acc);
+                print_error_message("SYNTAX ERROR");
+                exit(1);
+            }
+        }
 
         // when next character is an operator
-        if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%'){
+        if (current == '+' || current == '-' || current == '*' || current == '/'
+            || current == '%' || current == '<' || current == '>'){
             printf("# %llu\n", acc);
             last_op = current;
-            last_nonempty = current;
+            //last_nonempty = current;
             current = getchar();
             continue;
         }
@@ -88,11 +101,17 @@ unsigned long long int read_command(unsigned long long int acc, int last_op) // 
             break;
         }
 
-        current = getchar();
+        if (!isdigit(last_nonempty)){
+            printf("# %llu\n", acc);
+            print_error_message("SYNTAX ERROR");
+            exit(1);
+        }
+
         if (!isspace(current)) {
             last_nonempty = current;
         }
 
+        current = getchar();
     }
 
     printf("# %llu\n", acc);
@@ -121,7 +140,8 @@ bool calculate(void)
             printf("# %llu\n", acc);
         }
 
-        else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%'){
+        else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%'
+                 || ch == '<' || ch == '>'){
             acc = read_command(acc, ch);
         }
 
