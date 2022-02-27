@@ -49,7 +49,7 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
     bool hex_switcher =  false;
     bool okt_switcher = false;
     bool bin_switcher = false;
-    while (true){//current != ';' && current != '='){
+    while (true){
         uint64_t out = 0;
 
         if (isspace(current)){  // ignore whitespaces
@@ -94,9 +94,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 exit(1);
             }
             while (isxdigit(current) || isspace(current)){
-                int num = current - '0';
+                uint64_t num = current - '0';
 
                 if (!isspace(current)){
+                    if (num > UINT64_MAX - out){
+                        print_error_message("Out of range");
+                        exit(1);
+                    }
                     hex_switcher = false;
                     non_digit = false;
                     if (current == 'A' || current == 'a'){
@@ -137,9 +141,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 exit(1);
             }
             while ((current >= '0' && current <= '7') || isspace(current)){
-                int num = current - '0';
+                uint64_t num = current - '0';
 
                 if (!isspace(current)){
+                    if (num > UINT64_MAX - out){
+                        print_error_message("Out of range");
+                        exit(1);
+                    }
                     okt_switcher = false;
                     non_digit = false;
                     out *= 8;
@@ -154,9 +162,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 exit(1);
             }
             while (current == '0' || current == '1' || isspace(current)){
-                int num = current - '0';
+                uint64_t num = current - 48;
 
                 if (!isspace(current)){
+                    if (num > UINT64_MAX - out){
+                        print_error_message("Out of range");
+                        exit(1);
+                    }
                     bin_switcher = false;
                     non_digit = false;
                     out *= 2;
@@ -168,9 +180,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
         else {
             // reading numbers with whitespaces
             while ((current >= '0' && current <= '9') || isspace(current)) {
-                int num = current - '0';
+                uint64_t num = current - '0';
 
                 if (!isspace(current)){
+                    if (num > UINT64_MAX - out){
+                        print_error_message("Out of range");
+                        exit(1);
+                    }
                     non_digit = false;
                     out *= 10;
                     out += num;
@@ -209,7 +225,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 continue;
             }
             else {
-                acc += out;
+                if (out > UINT64_MAX - acc){
+                    print_error_message("Out of range");
+                    exit(1);
+                }
+                else {
+                    acc += out;
+                }
             }
         }
         else if (last_op == '-'){
@@ -220,7 +242,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 continue;
             }
             else {
-                acc -= out;
+                if (out > acc){
+                    print_error_message("Out of range");
+                    exit(1);
+                }
+                else {
+                    acc -= out;
+                }
             }
         }
         else if (last_op == '*'){
@@ -231,7 +259,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
                 continue;
             }
             else {
-                acc *= out;
+                if (UINT64_MAX / out < acc){
+                    print_error_message("Out of range");
+                    exit(1);
+                }
+                else {
+                    acc *= out;
+                }
             }
         }
         else if (last_op == '/'){
@@ -354,7 +388,7 @@ bool calculate(void)
         }
 
         else if (ch == 'M'){
-            *mem = acc;
+            *mem += acc;
         }
 
         else if (ch == 'R'){
@@ -399,10 +433,10 @@ bool calculate(void)
             return false;
         }
 
-        if (acc == UINT64_MAX){
-            print_error_message("SYNTAX ERROR");
-            return false;
-        }
+        //if (acc == UINT64_MAX){
+        //    print_error_message("SYNTAX ERROR");
+        //    return false;
+        //}
     }
 
     return true;
