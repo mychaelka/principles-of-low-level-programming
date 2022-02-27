@@ -88,14 +88,11 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
             continue;
         }
 
-        if (current == 'm'){
-            acc += *mem;
-            current = getchar();
-            non_digit = false;
-            continue;
-        }
-
         if (hex_switcher){ // base switchers
+            if (!isxdigit(current)){
+                print_error_message("SYNTAX ERROR");
+                exit(1);
+            }
             while (isxdigit(current) || isspace(current)){
                 int num = current - '0';
 
@@ -135,6 +132,10 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
             }
         }
         else if (okt_switcher){
+            if (!(current >= '0' && current <= '7')){
+                print_error_message("SYNTAX ERROR");
+                exit(1);
+            }
             while ((current >= '0' && current <= '7') || isspace(current)){
                 int num = current - '0';
 
@@ -148,6 +149,10 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
             }
         }
         else if (bin_switcher){
+            if (!(current == '0' || current == '1')){
+                print_error_message("SYNTAX ERROR");
+                exit(1);
+            }
             while (current == '0' || current == '1' || isspace(current)){
                 int num = current - '0';
 
@@ -175,39 +180,111 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
         }
 
         if (non_digit){
-            if (current != 'X' && current != 'O' && current != 'T'){
+            if (current != 'X' && current != 'O' && current != 'T' && current != 'm'){
                 print_error_message("SYNTAX ERROR");
                 exit(1);
             }
         }
 
         if (last_op == 'P'){
-            acc = out;
-        }
-        else if (last_op == '+'){
-            acc += out;
-        }
-        else if (last_op == '-'){
-            acc -= out;
-        }
-        else if (last_op == '*'){
-            acc *= out;
-        }
-        else if (last_op == '/'){
-            if (out == 0){
-                print_error_message("DIVISION BY ZERO");
+            if (non_digit){
+                print_error_message("SYNTAX ERROR");
                 exit(1);
             }
-            acc /= out;
+            if (current == 'm'){
+                acc += *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc = out;
+            }
+        }
+        else if (last_op == '+'){
+            if (current == 'm'){
+                acc += *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc += out;
+            }
+        }
+        else if (last_op == '-'){
+            if (current == 'm'){
+                acc -= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc -= out;
+            }
+        }
+        else if (last_op == '*'){
+            if (current == 'm'){
+                acc *= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc *= out;
+            }
+        }
+        else if (last_op == '/'){
+            if (current == 'm'){
+                if (*mem == 0){
+                    print_error_message("DIVISION BY ZERO");
+                    exit(1);
+                }
+                acc /= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                if (out == 0){
+                    print_error_message("DIVISION BY ZERO");
+                    exit(1);
+                }
+                acc /= out;
+            }
         }
         else if (last_op == '%'){
-            acc %= out;
+            if (current == 'm'){
+                acc %= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc %= out;
+            }
         }
         else if (last_op == '<'){
-            acc <<= out;
+            if (current == 'm'){
+                acc <<= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc <<= out;
+            }
         }
         else if (last_op == '>'){
-            acc >>= out;
+            if (current == 'm'){
+                acc >>= *mem;
+                current = getchar();
+                non_digit = false;
+                continue;
+            }
+            else {
+                acc >>= out;
+            }
         }
 
         if (current == 'N'){
@@ -218,9 +295,13 @@ uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at fi
         }
         if (current == 'M'){
             *mem = acc; // change pointer - but this possibly can't happen
+            current = getchar();
+            continue;
         }
         if (current == 'R'){
             *mem = 0;
+            current = getchar();
+            continue;
         }
 
         if (current == '='){
@@ -314,6 +395,11 @@ bool calculate(void)
         }
 
         else {
+            print_error_message("SYNTAX ERROR");
+            return false;
+        }
+
+        if (acc == UINT64_MAX){
             print_error_message("SYNTAX ERROR");
             return false;
         }

@@ -211,3 +211,56 @@ TEST(nanecisto_zadani_8)
             "# 6\n"
             "");
 }
+
+TEST(my_test_1)
+{
+    INPUT_STRING(
+            "P 10 + 7 ;\n"
+            );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 10\n"
+                "# 17\n"
+                );
+}
+
+TEST(my_test_2)
+{
+    INPUT_STRING(
+            "a ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "SYNTAX ERROR\n"
+                ""
+    );
+}
+
+TEST(my_test_3)
+{
+    INPUT_STRING(
+            "P 50 + 7 a ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 50\n"
+                "# 57\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "SYNTAX ERROR\n"
+                ""
+    );
+}
