@@ -42,7 +42,7 @@ void print_base(uint64_t num, int base)
 }
 
 
-uint64_t read_command(uint64_t acc, int last_op) // acc = 0 at first
+uint64_t read_command(uint64_t acc, int last_op, uint64_t *mem) // acc = 0 at first
 {
     int current = getchar();
     bool non_digit = true;
@@ -85,6 +85,13 @@ uint64_t read_command(uint64_t acc, int last_op) // acc = 0 at first
             bin_switcher = true;
             print_base(acc, 2);
             current = getchar();
+            continue;
+        }
+
+        if (current == 'm'){
+            acc += *mem;
+            current = getchar();
+            non_digit = false;
             continue;
         }
 
@@ -209,6 +216,12 @@ uint64_t read_command(uint64_t acc, int last_op) // acc = 0 at first
             printf("# %lu\n", acc);
             return acc;
         }
+        if (current == 'M'){
+            *mem = acc; // change pointer - but this possibly can't happen
+        }
+        if (current == 'R'){
+            *mem = 0;
+        }
 
         if (current == '='){
             printf("# %lu\n", acc);
@@ -249,11 +262,22 @@ uint64_t read_command(uint64_t acc, int last_op) // acc = 0 at first
 bool calculate(void)
 {
     unsigned long int acc = 0;
+    uint64_t memory = 0;
+    uint64_t *mem;
+    mem = &memory;
     int ch;
     while ((ch=getchar()) != EOF){ // 1 loop = loading of 1 character from stdin
         if (ch == 'N'){
             acc = 0;
             printf("# %lu\n", acc);
+        }
+
+        else if (ch == 'M'){
+            *mem = acc;
+        }
+
+        else if (ch == 'R'){
+            *mem = 0;
         }
 
         else if (ch == ';'){ // in case of ';' continue
@@ -269,7 +293,7 @@ bool calculate(void)
 
         else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%'
                  || ch == '<' || ch == '>'){
-            acc = read_command(acc, ch);
+            acc = read_command(acc, ch, mem);
         }
 
         else if (ch == 'X'){
