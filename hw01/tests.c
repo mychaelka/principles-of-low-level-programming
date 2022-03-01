@@ -240,7 +240,7 @@ TEST(my_test_2)
                 ""
     );
     ASSERT_FILE(stderr,
-                "SYNTAX ERROR\n"
+                "Syntax error\n"
                 ""
     );
 }
@@ -260,7 +260,647 @@ TEST(my_test_3)
                 ""
     );
     ASSERT_FILE(stderr,
-                "SYNTAX ERROR\n"
+                "Syntax error\n"
+                ""
+    );
+}
+TEST(my_test_4)
+{
+    INPUT_STRING(
+            "20 + 3 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+TEST(my_test_5)
+{
+    INPUT_STRING(
+            "P 4 - X 8 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 4\n"
+                "# 4\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Out of range\n"
+                ""
+    );
+}
+
+TEST(my_test_6)
+{
+    INPUT_STRING(
+            "X 20\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_7)
+{
+    INPUT_STRING(
+            "P T 80 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_8)
+{
+    INPUT_STRING(
+            "P X X ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+TEST(my_test_9)
+{
+    INPUT_STRING(
+            "PXO;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_10)
+{
+    INPUT_STRING(
+            "X =\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_11)
+{
+    INPUT_STRING(
+            "X 20\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_12)
+{
+    INPUT_STRING(
+            "X 1 O;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_13)
+{
+    INPUT_STRING(
+            "Pm;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_14)
+{
+    INPUT_STRING(
+            "POm;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_15)
+{
+    INPUT_STRING(
+            "Pmm;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_16)
+{
+    INPUT_STRING(
+            "+ T 110;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                "# 6\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_17)
+{
+    INPUT_STRING(
+            "P 50 / X 1af ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 50\n"
+                "# 32\n"
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_18)
+{
+    INPUT_STRING(
+            "P O 10m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                "# 8\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_19)
+{
+    INPUT_STRING(
+            "P10m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 10\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_20)
+{
+    INPUT_STRING(
+            "P m 30 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_21)
+{
+    INPUT_STRING(
+            "P 15; MRRM; +m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 15\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_22)
+{
+    INPUT_STRING(
+            "P 2 M ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 2\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_23)
+{
+    INPUT_STRING(
+            "M;P10;/m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_24)
+{
+    INPUT_STRING(
+            "M;\nP 10;\n/m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 10\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Division by zero\n"
+                ""
+    );
+}
+
+TEST(my_test_25)
+{
+    INPUT_STRING(
+            "P3;\n M;\n P10;\n <m;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 3\n"
+                "# 10\n"
+                "# 80\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_26)
+{
+    INPUT_STRING(
+            "P 51 + 2 R =\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 51\n"
+                "# 53\n"
+                "# 53\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_27)
+{
+    INPUT_STRING(
+            "Pm M R ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_28)
+{
+    INPUT_STRING(
+            "P 10 + m m  ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 10\n"
+                "# 10\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_29)
+{
+    INPUT_STRING(
+            "P 3 X 11 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 3\n"
+                "# 3\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_30)
+{
+    INPUT_STRING(
+            "P 15 X ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 15\n"
+                "# F\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_31)
+{
+    INPUT_STRING(
+            "P63223\n;R\nXRNRNMNONXX;NMPMRX\n1010M T"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 63223\n"
+                "# F6F7\n"
+                "# 0\n"
+                "# 0\n"
+                "# 0\n"
+                "# 0\n"
+                "# 0\n"
+                "# 0\n"
+                "# 0\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_32)
+{
+    INPUT_STRING(
+            "P16430=XOM=101/N+N=R\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 16430\n"
+                "# 16430\n"
+                "# 402E\n"
+                "# 40056\n"
+                "# 16430\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Syntax error\n"
+                ""
+    );
+}
+
+TEST(my_test_33)
+{
+    INPUT_STRING(
+            "P1;<63=\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 1\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_34)
+{
+    INPUT_STRING(
+            "P1<63="
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 1\n"
+                "# 9223372036854775808\n"
+                "# 9223372036854775808\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_35)
+{
+    INPUT_STRING(
+            "PO57PO11;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 0\n"
+                "# 47\n"
+                "# 57\n"
+                "# 9\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_36)
+{
+    INPUT_STRING(
+            "P1;\n"
+            "<64;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+                "# 1\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                "Out of range"
                 ""
     );
 }
