@@ -745,11 +745,6 @@ TEST(my_test_29)
     int main_rv = student_main();
 
     ASSERT(main_rv == 1);
-    ASSERT_FILE(stdout,
-                "# 3\n"
-                "# 3\n"
-                ""
-    );
     ASSERT_FILE(stderr,
                 "Syntax error\n"
                 ""
@@ -900,7 +895,507 @@ TEST(my_test_36)
                 ""
     );
     ASSERT_FILE(stderr,
-                "Out of range"
+                "Out of range\n"
                 ""
+    );
+}
+
+TEST(my_test_37)
+{
+    INPUT_STRING(
+            "P1;\n"
+            "+0000026;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+                "# 1\n"
+                "# 27\n"
+                ""
+    );
+    ASSERT_FILE(stderr,
+                ""
+    );
+}
+
+TEST(my_test_38)
+{
+    INPUT_STRING(
+            "P T 111111111111111 111111111111111 111111111111111 111111111111111 1111 9 ; \n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 0\n"
+            "# 18446744073709551615\n"
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_39)
+{
+    INPUT_STRING(
+            "P T 111111111111111 111111111111111 111111111111111 111111111111111 111 9 ; \n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 0\n"
+            "# 9223372036854775807\n"
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_40)
+{
+    INPUT_STRING(
+            "P T 111111111111111 111111111111111 111111111111111 111111111111111 11111 9 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 0\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_41)
+{
+    INPUT_STRING(
+            "P 20 + T 11111111111111111111111111111111111 ; \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 20\n"
+            "# 10100\n"
+            "# 34359738387\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
+    );
+}
+
+TEST(my_test_42)
+{
+    INPUT_STRING(
+            "/0z\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Division by zero\n"
+            ""
+    );
+}
+
+TEST(my_test_43)
+{
+    INPUT_STRING(
+            "> 0712241751\n"
+            "\n"
+            "> n \n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_44)
+{
+    INPUT_STRING(
+            "P 10 MMNMMMRR + X afde *  T 1101 - O 125276 ;\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 10\n"
+            "# 0\n"
+            "# 0\n"
+            "# 45022\n"
+            "# 1010111111011110\n"
+            "# 585286\n"
+            "# 2167106\n"
+            "# 541576\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
+    );
+}
+
+TEST(my_test_45)
+{
+    INPUT_STRING(
+            "P 298 + T 1111102 =\n"
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 298\n"
+            "# 100101010\n"
+            "# 360\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_46)
+{
+    INPUT_STRING(
+            "P 329\n"
+            "\n"
+            "2345\n"
+            "08\n"
+            "+ % 99 =\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 329234508\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_47)
+{
+    INPUT_STRING(
+            "P 9382 + - 237 \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 9382\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_48)
+{
+    INPUT_STRING(
+            "P - 2387 \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_49)
+{
+    INPUT_STRING(
+            "P 20;\n"
+            "/ T 01 ; \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 20\n"
+            "# 10100\n"
+            "# 20\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
+    );
+}
+
+TEST(my_test_50)
+{
+    INPUT_STRING(
+            "+ X 87 / a = \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 0\n"
+            "# 135\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Syntax error\n"
+            ""
+    );
+}
+
+TEST(my_test_51)
+{
+    INPUT_STRING(
+            "P X afffffffffffffffffffffffffffff; \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 0\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_52)
+{
+    INPUT_STRING(
+            "P 18446744073709551615 ; + 1 = \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 18446744073709551615\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
+    );
+}
+
+TEST(my_test_53)
+{
+    INPUT_STRING(
+            "P 18446744073709551615 ; \n"
+            "+ 1 = \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 18446744073709551615\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_54)
+{
+    INPUT_STRING(
+            "P 171293822569102704640\n"
+            "M\n"
+            "Pm;\n"
+            "=\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_55)
+{
+    INPUT_STRING(
+            "P 5M\n"
+            "P18446744073709551615 M P1 M P0 +m\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 5\n"
+            "# 18446744073709551615\n"
+            "# 1\n"
+            "# 0\n"
+            "# 5\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
+    );
+}
+
+TEST(my_test_56)
+{
+    INPUT_STRING(
+            "P 20;\n"
+            "M\n"
+            "P18446744073709551615\n"
+            "+m\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 20\n"
+            "# 18446744073709551615\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_57)
+{
+    INPUT_STRING(
+            "> 64\n"
+            "z\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_58)
+{
+    INPUT_STRING(
+            "P 18446744073709551615 M ; \n"
+            "+ m ;\n"
+            "\n"
+            "P 10; M;\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            "# 18446744073709551615\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_59)
+{
+    INPUT_STRING(
+            "P 18446744073709551615\n"
+            "283792 ; \n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 1);
+    ASSERT_FILE(stdout,
+            ""
+    );
+    ASSERT_FILE(stderr,
+            "Out of range\n"
+            ""
+    );
+}
+
+TEST(my_test_60)
+{
+    INPUT_STRING(
+            "P 23983 ; nejaky komentar\n"
+            ""
+    );
+
+    int main_rv = student_main();
+
+    ASSERT(main_rv == 0);
+    ASSERT_FILE(stdout,
+            "# 23983\n"
+            ""
+    );
+    ASSERT_FILE(stderr,
+            ""
     );
 }

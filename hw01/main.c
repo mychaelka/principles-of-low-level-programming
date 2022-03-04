@@ -93,7 +93,7 @@ uint64_t read_number(int current, bool *rv)
         out = num;
     }
 
-    if (out > UINT64_MAX - num) { // loaded number would overflow -> but move this to arithmetic ops
+    if (out > UINT64_MAX - num) { // loaded number would overflow
         print_error_message("Out of range");
         *rv = false;
         return out;
@@ -213,6 +213,11 @@ uint64_t read_command(uint64_t* acc, int last_op, uint64_t* mem, bool* rv)
             }
             while (is_allowed_digit(base, current)) {
                 if (!isspace(current)) {
+                    if (UINT64_MAX / base < out) {
+                        print_error_message("Out of range");
+                        *rv = false;
+                        return *acc;
+                    }
                     out *= base;
                     out += read_number(current, rv);
                     non_digit = false; // digits were successfully read
@@ -248,8 +253,8 @@ uint64_t read_command(uint64_t* acc, int last_op, uint64_t* mem, bool* rv)
         }
 
         // operations with memory
-        if (current == 'M') {
-            *mem = out;
+        if (current == 'M') {  // control for overflow?
+            *mem += *acc;
             return *acc;
         } else if (current == 'R') {
             *mem = 0;
