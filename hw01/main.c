@@ -9,7 +9,7 @@ void print_error_message(char *message)
     fprintf(stderr, "%s\n", message);
 }
 
-void print_base(uint64_t num, int base)
+void print_binary(uint64_t num)
 {
     uint64_t rem;
 
@@ -21,15 +21,14 @@ void print_base(uint64_t num, int base)
     char result[10000];
     int i, idx = 0;
     while (num > 0) {
-        rem = num % base;
+        rem = num % 2;
         if (rem < 10) {
             rem += 48;
         } else {
             rem += 55;
         }
         result[idx] = rem;
-
-        num /= base;
+        num /= 2;
         idx++;
     }
     printf("# ");
@@ -39,32 +38,22 @@ void print_base(uint64_t num, int base)
     printf("\n");
 }
 
-uint64_t rotate_left(uint64_t acc, unsigned int bits) {
-    // bits modulo 64
-    return acc;
-}
-uint64_t rotate_right(uint64_t acc, unsigned int bits) {
-    return acc;
+uint64_t rotate(uint64_t **acc, unsigned int bits, bool left) {
+    bits %= 64;
+    if (bits == 0) {
+        return **acc;
+    }
+    if (left) {
+        return ((**acc << bits) | (**acc >> (512 - bits)));  // 64 * 8
+    }
+    return ((**acc >> bits) | (**acc << (512 - bits)));
 }
 
-bool switch_base(int base, bool *hex_switcher, bool *bin_switcher, bool *okt_switcher, uint64_t acc)
-{
-    if (*hex_switcher || *okt_switcher || *bin_switcher) { // switcher already in place (X O, X X,...)
-        return false;
-    }
-    if (base == 16) {
-        *hex_switcher = true;
-    } else if (base == 2) {
-        *bin_switcher = true;
-    } else if (base == 8) {
-        *okt_switcher = true;
-    }
-    return true;
-}
 
 bool is_arithmetic_op(int current)
 {
-    if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%' || current == '<' || current == '>' || current == 'P') {
+    if (current == '+' || current == '-' || current == '*' || current == '/' || current == '%'
+            || current == '<' || current == '>' || current == 'P' || current == 'l' || current == 'r') {
         return true;
     }
     return false;
@@ -185,6 +174,12 @@ void arithmetic_operation(int operator, uint64_t out, bool* rv, uint64_t** acc)
         }
         **acc >>= out;
     }
+    else if (operator == 'l') {
+        **acc = rotate(acc, out, true);
+    }
+    else if (operator == 'r') {
+        **acc = rotate(acc, out, false);
+    }
 }
 
 uint64_t read_command(uint64_t* acc, int last_op, uint64_t* mem, bool* rv)
@@ -296,7 +291,7 @@ uint64_t read_command(uint64_t* acc, int last_op, uint64_t* mem, bool* rv)
         } else if (current == 'T') {
             base = 2;
             current = getchar();
-            print_base(*acc, base);
+            print_binary(*acc);
             if (!non_digit) {
                 return *acc;
             }
@@ -357,12 +352,12 @@ bool calculate()
             printf("# %lo\n", *acc);
             continue;
         } else if (ch == 'T') {
-            print_base(*acc, 2);
+            print_binary(*acc);
             continue;
         }
 
-        // arithmetic operations
-        else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%' || ch == '<' || ch == '>') {
+        // arithmetic operations and bit rotations
+        else if (ch == 'P' || ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%' || ch == '<' || ch == '>' || ch == 'l' || ch == 'r') {
             accum = read_command(acc, ch, mem, rv);
             if (!return_val) { // error occurred while reading next command
                 return false;
