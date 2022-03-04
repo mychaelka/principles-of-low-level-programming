@@ -170,8 +170,10 @@ void arithmetic_operation(int operator, uint64_t out, bool * rv, uint64_t * * ac
         **acc >>= out;
     } else if (operator== 'l') {
         **acc = rotate(acc, out, true);
+        return;
     } else if (operator== 'r') {
         **acc = rotate(acc, out, false);
+        return;
     }
 }
 
@@ -229,7 +231,8 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
         if (current == '=') { // =,;,EOF -> end current command
             printf("# %lu\n", *acc);
             return *acc;
-        } else if (current == ';') {
+        }
+        if (current == ';') {
             while (current != '\n') {
                 if (current == EOF) {
                     break;
@@ -237,7 +240,8 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
                 current = getchar();
             }
             return *acc;
-        } else if (current == EOF) {
+        }
+        if (current == EOF) {
             return *acc;
         }
         if (current == 'N') { // reset the accumulator
@@ -250,10 +254,12 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
         if (current == 'M') {
             *mem += *acc;
             return *acc;
-        } else if (current == 'R') {
+        }
+        if (current == 'R') {
             *mem = 0;
             return *acc;
-        } else if (current == 'm') {
+        }
+        if (current == 'm') {
             if (!non_digit) {
                 print_error_message("Syntax error");
                 *rv = false;
