@@ -115,7 +115,7 @@ bool is_allowed_digit(int base, int current)
     return false;
 }
 
-void arithmetic_operation(int operator, uint64_t out, bool * rv, uint64_t * * acc)
+void arithmetic_operation(int operator, uint64_t out, bool *rv, uint64_t **acc)
 {
     if (operator== 'P') {
         **acc = out;
