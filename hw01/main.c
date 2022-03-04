@@ -67,7 +67,8 @@ uint64_t read_number(int current, bool *rv)
 
     if (isspace(current)) {
         return out;
-    } else if (current == 'A' || current == 'a') {
+    }
+    if (current == 'A' || current == 'a') {
         out = 10;
     } else if (current == 'B' || current == 'b') {
         out = 11;
@@ -224,24 +225,29 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
         if (isspace(current)) { // ignore whitespaces
             current = getchar();
             continue;
-        } else if (current == '=') { // =,;,EOF -> end current command
+        }
+        if (current == '=') { // =,;,EOF -> end current command
             printf("# %lu\n", *acc);
             return *acc;
         } else if (current == ';') {
             while (current != '\n') {
+                if (current == EOF) {
+                    break;
+                }
                 current = getchar();
             }
             return *acc;
         } else if (current == EOF) {
             return *acc;
-        } else if (current == 'N') { // reset the accumulator
+        }
+        if (current == 'N') { // reset the accumulator
             *acc = 0;
             printf("# %lu\n", *acc);
             return *acc;
         }
 
         // operations with memory
-        if (current == 'M') { // control for overflow?
+        if (current == 'M') {
             *mem += *acc;
             return *acc;
         } else if (current == 'R') {
@@ -272,7 +278,8 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
             }
             non_digit = true;
             continue;
-        } else if (current == 'O') {
+        }
+        if (current == 'O') {
             base = 8;
             current = getchar();
             printf("# %lo\n", *acc);
@@ -299,11 +306,12 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
             non_digit = true;
             current = getchar();
             continue;
-        } else { // no other options -> everything else is an invalid character
-            print_error_message("Syntax error");
-            *rv = false;
-            return *acc;
         }
+
+        // no other legal options
+        print_error_message("Syntax error");
+        *rv = false;
+        return *acc;
     }
 }
 
@@ -324,6 +332,9 @@ bool calculate()
             continue;
         } else if (ch == ';') { // everything after ; and before \n is a comment
             while (ch != '\n') {
+                if (ch == EOF) {
+                    break;
+                }
                 ch = getchar();
             }
             continue;           // redundant??
