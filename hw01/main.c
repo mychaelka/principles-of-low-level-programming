@@ -9,6 +9,7 @@ void print_error_message(char *message)
     fprintf(stderr, "%s\n", message);
 }
 
+
 void print_binary(uint64_t num)
 {
     uint64_t rem;
@@ -38,6 +39,7 @@ void print_binary(uint64_t num)
     printf("\n");
 }
 
+
 uint64_t rotate(uint64_t **acc, unsigned int bits, bool left)
 {
     bits %= 64;
@@ -45,10 +47,11 @@ uint64_t rotate(uint64_t **acc, unsigned int bits, bool left)
         return **acc;
     }
     if (left) {
-        return ((**acc << bits) | (**acc >> (512 - bits))); // 64 * 8
+        return ((**acc << bits) | (**acc >> (64 - bits)));
     }
-    return ((**acc >> bits) | (**acc << (512 - bits)));
+    return ((**acc >> bits) | (**acc << (64 - bits)));
 }
+
 
 bool is_arithmetic_op(int current)
 {
@@ -59,6 +62,7 @@ bool is_arithmetic_op(int current)
     }
     return false;
 }
+
 
 uint64_t read_number(int current, bool *rv)
 {
@@ -93,7 +97,8 @@ uint64_t read_number(int current, bool *rv)
     return out;
 }
 
-bool is_allowed_digit(int base, int current)
+
+bool is_allowed_digit(int base, int current)  // whitespaces are allowed while reading number
 {
     if (base == 10) {
         if ((current >= '0' && current <= '9') || isspace(current)) {
@@ -115,78 +120,80 @@ bool is_allowed_digit(int base, int current)
     return false;
 }
 
+
 void arithmetic_operation(int operator, uint64_t out, bool *rv, uint64_t **acc)
 {
-    if (operator== 'P') {
+    if (operator == 'P') {
         **acc = out;
-    } else if (operator== '+') {
+    } else if (operator == '+') {
         if (out > UINT64_MAX - **acc) {
             print_error_message("Out of range");
             *rv = false;
             return;
         }
         **acc += out;
-    } else if (operator== '-') {
+    } else if (operator == '-') {
         if (out > **acc) {
             print_error_message("Out of range");
             *rv = false;
             return;
         }
         **acc -= out;
-    } else if (operator== '*') {
+    } else if (operator == '*') {
         if (out != 0 && UINT64_MAX / out < **acc) {
             print_error_message("Out of range");
             *rv = false;
             return;
         }
         **acc *= out;
-    } else if (operator== '/') {
+    } else if (operator == '/') {
         if (out == 0) {
             print_error_message("Division by zero");
             *rv = false;
             return;
         }
         **acc /= out;
-    } else if (operator== '%') {
+    } else if (operator == '%') {
         if (out == 0) {
             print_error_message("Division by zero");
             *rv = false;
             return;
         }
         **acc %= out;
-    } else if (operator== '<') {
+    } else if (operator == '<') {
         if (out > 63) {
             print_error_message("Out of range");
             *rv = false;
             return;
         }
         **acc <<= out;
-    } else if (operator== '>') {
+    } else if (operator == '>') {
         if (out > 63) {
             print_error_message("Out of range");
             *rv = false;
             return;
         }
         **acc >>= out;
-    } else if (operator== 'l') {
+    } else if (operator == 'l') {
         **acc = rotate(acc, out, true);
         return;
-    } else if (operator== 'r') {
+    } else if (operator == 'r') {
         **acc = rotate(acc, out, false);
         return;
     }
 }
 
+
 uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
 {
     int current = getchar();
     int base = 10;
-    bool non_digit = true;
+    bool non_digit = true;  // if true, last read character was not a digit or whitespace
     uint64_t out = 0;
     uint64_t **acc_pt = &acc;
 
     while (true) {
-        if (base != 10) { // after switch, a number must follow
+        if (base != 10) {  // after base switch, an allowed number must follow
             if (!is_allowed_digit(base, current)) {
                 print_error_message("Syntax error");
                 *rv = false;
@@ -196,7 +203,7 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
 
         if (non_digit && current != 'T' && current != 'X' && current != 'O' &&
                 !isspace(current) && current != 'N' && current != 'M' &&
-                current != 'm') { // if turned on, a number or base switch must follow
+                current != 'm') {  // after non_digit was read, only allowed characters are digits/base switches/memory chars
             if (!is_allowed_digit(base, current)) {
                 print_error_message("Syntax error");
                 *rv = false;
@@ -211,24 +218,24 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
                     }
                     out *= base;
                     out += read_number(current, rv);
-                    non_digit = false; // digits were successfully read
+                    non_digit = false;
                 }
                 current = getchar();
             }
-            base = 10; // after reading next number, base switches back to 10
+            base = 10; // after reading next number, base switches to default
             arithmetic_operation(last_op, out, rv, acc_pt);
-            if (!*rv) { // arithmetic operation was not successful
+            if (!*rv) {
                 return *acc;
             }
             printf("# %lu\n", *acc);
             out = 0;
         }
 
-        if (isspace(current)) { // ignore whitespaces
+        if (isspace(current)) {
             current = getchar();
             continue;
         }
-        if (current == '=') { // =,;,EOF -> end current command
+        if (current == '=') {
             printf("# %lu\n", *acc);
             return *acc;
         }
@@ -244,7 +251,7 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
         if (current == EOF) {
             return *acc;
         }
-        if (current == 'N') { // reset the accumulator
+        if (current == 'N') {
             *acc = 0;
             printf("# %lu\n", *acc);
             return *acc;
@@ -267,7 +274,7 @@ uint64_t read_command(uint64_t *acc, int last_op, uint64_t *mem, bool *rv)
             }
             out = *mem;
             arithmetic_operation(last_op, out, rv, acc_pt);
-            if (!*rv) { // arithmetic operation was not successful
+            if (!*rv) {
                 return *acc;
             }
             printf("# %lu\n", *acc);
@@ -330,28 +337,25 @@ bool calculate()
     bool return_val = true;
     bool *rv = &return_val;
 
-    int ch = ' '; // characters that can begin a line: whitespace, ; = N M R P,
-                  // arithmetic ops, X O T,
-    while ((ch = getchar()) !=
-            EOF) {         // main loop that goes either until EOF or until an error occurs
-        if (isspace(ch)) { // skipping whitespaces
+    int ch = ' ';
+    while ((ch = getchar()) != EOF) {
+        if (isspace(ch)) {
             continue;
-        } else if (ch == ';') { // everything after ; and before \n is a comment
+        } else if (ch == ';') { 
             while (ch != '\n') {
                 if (ch == EOF) {
                     break;
                 }
                 ch = getchar();
-            }
-            continue;           // redundant??
-        } else if (ch == '=') { // in case of '=' print accumulator and continue
+            }         
+        } else if (ch == '=') {
             printf("# %lu\n", *acc);
         } else if (ch == 'N') {
             *acc = 0;
             printf("# %lu\n", *acc);
-        } else if (ch == 'M') { // add accumulator to memory
+        } else if (ch == 'M') { 
             memory += *acc;
-        } else if (ch == 'R') { // set memory to zero
+        } else if (ch == 'R') { 
             memory = 0;
         }
 
