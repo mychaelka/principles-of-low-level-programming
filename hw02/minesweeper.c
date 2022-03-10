@@ -40,6 +40,26 @@ int get_number(uint16_t cell)
     return -1;
 }
 
+int set_start(int index)
+{
+    int start = 0;
+
+    if (index != 0) {
+        start = index - 1;
+    }
+    return start;
+}
+
+int set_stop(int index, int length)
+{
+    int stop = length;
+
+    if (index != length) {
+        stop = index + 1;
+    }
+    return stop;
+}
+
 /* ************************************************************** *
  *                         INPUT FUNCTIONS                        *
  * ************************************************************** */
@@ -47,11 +67,11 @@ int get_number(uint16_t cell)
 bool set_cell(uint16_t *cell, char val)
 {
     if (val == 'F' || val == 'f') {
-        *cell = 20; // TODO: count surrounding mines
+        *cell = 20; // if F, then the mine flag is correct
         return true;
     }
     if (val == 'W' || val == 'w') {
-        *cell = 20;
+        *cell = 30;
         return true;
     }
     if (val == 'X' || val == 'x') {
@@ -75,21 +95,24 @@ bool set_cell(uint16_t *cell, char val)
 
 int load_board(size_t rows, size_t cols, uint16_t board[rows][cols])
 {
-    int ch = getchar();
-    int current_row = 0;
-    int current_col = 0;
-    while (ch != EOF) {
-        char current = (char) ch;
+    size_t current_row = 0;
+    size_t current_col = 0;
+    size_t loaded = 0;
+    while (loaded != rows*cols) {
+        int ch = getchar();
+        char current = (char) ch;   // loads only row*col chars
 
-        if ((current_col + 1) % cols == 0) {
+        if (set_cell(&board[current_row][current_col], current)) {
+            loaded += 1;
+        }
+
+        if (current_col == (cols - 1)) {
            current_row += 1;
            current_col = 0;
         }
-
-        set_cell(&board[current_row][current_col], current);
-
-        current_col += 1;
-        ch = getchar();
+        else {
+            current_col += 1;
+        }
     }
 
     // The postprocess function should be called at the end of the load_board function
@@ -114,6 +137,27 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
             if (is_mine(board[i][j])) {
                 mines += 1;
             }
+
+            if (board[i][j] >= 0 && board[i][j] <= 8) {  // create helper function count_mines
+                int start_x = set_start(i);
+                int end_x = set_stop(i, rows);
+                int start_y = set_start(j);
+                int end_y = set_stop(j, cols);
+                int surrounding_mines = 0;
+
+                for (int x = start_x; x <= end_x; x++) {
+                    for (int y = start_y; y <= end_y; y++) {
+                        if (x != y && is_mine(board[x][y])) {
+                            surrounding_mines += 1;
+                            //board[i][j] += 1;
+                        }
+                    }
+                }
+
+                if ((board[i][j] >= 0 && board[i][j] <= 8) && (surrounding_mines != board[i][j])) {
+                    return -1;
+                }
+            }
         }
     }
     if (mines == 0) {
@@ -121,6 +165,7 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
     }
     return mines;
 }
+
 
 /* ************************************************************** *
  *                        OUTPUT FUNCTIONS                        *
@@ -130,13 +175,8 @@ int print_board(size_t rows, size_t cols, uint16_t board[rows][cols])
 {
     int row = 0;
     for (size_t i = 0; i <= 2*rows + 1; i++) {
-        if (i % 2 == 0 && i > 0) {  // we are in specific row -> printing cells in this part
-            printf(" %zu ", i / 2);
-            row += 1;
-
-            // TODO: print cells here
-
-
+        if (i % 2 == 0 && i > 0) {
+            printf(" %zu ", i / 2 - 1);
         } else {
             printf("   ");
         }
@@ -154,9 +194,24 @@ int print_board(size_t rows, size_t cols, uint16_t board[rows][cols])
                 }
             }
             else if (i % 2 == 0) {
-                printf("|   ");
+                if (board[row][j] == 100) {
+                    printf("|XXX");
+                }
+                else if (board[row][j] == 20 || board[row][j] == 30) {
+                    printf("|_F_");
+                }
+                else if (board[row][j] == 10) {
+                    printf("|XXX");
+                }
+                else if (board[row][j] == 0) {
+                    printf("|   ");
+                }
+                else if (board[row][j] > 0 && board[row][j] <= 8) {
+                    printf("| %d ", board[row][j]);
+                }
                 if (j == cols - 1) {
                     printf("|\n");
+                    row += 1;
                 }
             }
         }
