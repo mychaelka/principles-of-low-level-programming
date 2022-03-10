@@ -128,28 +128,34 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
 
 int print_board(size_t rows, size_t cols, uint16_t board[rows][cols])
 {
+    int row = 0;
     for (size_t i = 0; i <= 2*rows + 1; i++) {
-        if (i % 2 == 0 && i > 0) {
+        if (i % 2 == 0 && i > 0) {  // we are in specific row -> printing cells in this part
             printf(" %zu ", i / 2);
+            row += 1;
+
+            // TODO: print cells here
+
+
         } else {
             printf("   ");
         }
-        for (size_t j = 1; j <= cols; j++) {
+        for (size_t j = 0; j < cols; j++) {
             if (i == 0) {
                 printf("  %zu ", j);
-                if (j == cols) {
+                if (j == cols - 1) {
                     printf("\n");
                 }
             }
             else if (i % 2 != 0) {
                 printf("+---");
-                if (j == cols) {
+                if (j == cols - 1) {
                     printf("+\n");
                 }
             }
             else if (i % 2 == 0) {
                 printf("|   ");
-                if (j == cols) {
+                if (j == cols - 1) {
                     printf("|\n");
                 }
             }
