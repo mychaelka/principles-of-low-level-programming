@@ -73,9 +73,9 @@ static int play_find_mines(size_t rows, size_t cols, uint16_t board[rows][cols])
 int main(int argc, char *argv[])
 {
     // FOR MY TESTING - DELETE LATER!
-    int array[10][10];
-    int* pArray = array[0];
-    print_board(10, 10, array);
+    //int array[15][15];
+    //int* pArray = array[0];
+    //print_board(15, 15, array);
 
 
     // yes struct would be better
