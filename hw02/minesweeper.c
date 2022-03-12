@@ -1,5 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 #include "minesweeper.h"
 
 #define UNUSED(A) (void) (A)
@@ -8,9 +10,16 @@
  *                         HELP FUNCTIONS                         *
  * ************************************************************** */
 
+// mine = 100
+// wrong flag = 30 -- 38
+// correct flag = 40 -- 48
+// covered field = 10 -- 18
+// uncovered field = 0 -- 8
+// uncovered field without known mines = 20 -- 28
+
 bool is_flag(uint16_t cell)
 {
-    if (cell >= 20 && cell <= 28) {
+    if (cell >= 30 && cell <= 48) {
         return true;
     }
     return false;
@@ -54,9 +63,9 @@ size_t set_start(size_t index)
 
 size_t set_stop(size_t index, size_t length)
 {
-    size_t stop = length;
+    size_t stop = length - 1;
 
-    if (index != length) {
+    if (index != length - 1) {
         stop = index + 1;
     }
     return stop;
@@ -99,6 +108,28 @@ int count_unrevealed(size_t rows, size_t cols, uint16_t board[rows][cols])
         }
     }
     return unrevealed;
+}
+
+void print_board_character(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
+{
+    if (board[row][col] >= 30 && board[row][col] <= 48) {
+        printf("|_F_");
+    }
+    else if (board[row][col] == 1000) {  // uncovered mine
+        printf("| M ");
+    }
+    else if (board[row][col] == 0 || board[row][col] == 20) {
+        printf("|   ");
+    }
+    else if ((board[row][col] > 0 && board[row][col] <= 8)) {
+        printf("| %d ", board[row][col]);
+    }
+    else if (board[row][col] > 20 && board[row][col] <= 28) {
+        printf("| %d ", board[row][col] - 20);
+    }
+    else {
+        printf("|XXX");
+    }
 }
 
 /* ************************************************************** *
@@ -181,7 +212,7 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
                 mines += 1;
             }
 
-            //if (board[i][j] >= 0 && board[i][j] <= 8) {  // create helper function count_mines
+            // create helper function count_mines
             size_t start_x = set_start(i);
             size_t end_x = set_stop(i, rows);
             size_t start_y = set_start(j);
@@ -248,25 +279,8 @@ int print_board(size_t rows, size_t cols, uint16_t board[rows][cols])
                 }
             }
             else if (i % 2 == 0) {
+                print_board_character(rows, cols, board, row, j);
 
-                if (board[row][j] >= 30 && board[row][j] <= 48) {
-                    printf("|_F_");
-                }
-                else if (board[row][j] == 1000) {  // uncovered mine
-                    printf("| M ");
-                }
-                else if (board[row][j] == 0) {
-                    printf("|   ");
-                }
-                else if ((board[row][j] > 0 && board[row][j] <= 8) || board[row][j] == 20) {
-                    printf("| %d ", board[row][j]);
-                }
-                else if (board[row][j] > 20 && board[row][j] <= 28) {
-                    printf("| %d ", board[row][j] - 20);
-                }
-                else {
-                    printf("|XXX");
-                }
                 if (j == cols - 1) {
                     printf("|\n");
                     row += 1;
@@ -294,7 +308,6 @@ char show_cell(uint16_t cell)
     if (cell > 20 && cell <= 28) {
         return (char) (cell - 20);
     }
-    //(cell >= 10 && cell <= 18) {
 
     return 'X';
 }
@@ -307,7 +320,6 @@ int reveal_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row
 {
     if (board[row][col] >= 100) {
         reveal_single(&board[row][col]);
-        print_board(rows, cols, board);
         return 1;
     }
     if (board[row][col] >= 30 && board[row][col] <= 48) {
@@ -321,8 +333,10 @@ int reveal_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row
     }
     if (board[row][col] > 10 && board[row][col] <= 18) {
         reveal_single(&board[row][col]);
-        print_board(rows, cols, board);
         return 0;
+    }
+    if (board[row][col] == 10) {
+        reveal_floodfill(rows, cols, board, row, col);
     }
 
     return 0;
@@ -334,31 +348,48 @@ int reveal_single(uint16_t *cell)
         *cell = 1000;
         return 1;
     }
-    if (*cell >= 30 && *cell <= 48) {
-        return -1;
+    if (is_flag(*cell)) {
+        *cell -= (*cell / 10) * 10;
+        return 0;
+        //return -1;
     }
     if (*cell >= 10 && *cell <= 18) {
         *cell -= 10;
         return 0;
     }
 
-
     return 0;
 }
 
 void reveal_floodfill(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
 {
-    // TODO: Implement me
-    UNUSED(rows);
-    UNUSED(cols);
-    UNUSED(board);
-    UNUSED(row);
-    UNUSED(col);
+    if ((board[row][col] > 10 && board[row][col] <= 18) || is_flag(board[row][col])) {
+        reveal_single(&board[row][col]);
+        //return;
+    }
+    if (board[row][col] == 10) {
+        reveal_single(&board[row][col]);
+        size_t start_x = set_start(row);
+        size_t end_x = set_stop(row, rows);
+        size_t start_y = set_start(col);
+        size_t end_y = set_stop(col, cols);
+
+        for (size_t x = start_x; x <= end_x; x++) {
+            for (size_t y = start_y; y <= end_y; y++) {
+                if (!(x == row && y == col)) {
+                    reveal_floodfill(rows, cols, board, x, y);
+                }
+            }
+        }
+    }
 }
 
 int flag_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
 {
     int cell = board[row][col];
+    if (cell >= 0 && cell <= 8) {
+        return INT16_MIN;
+    }
     if (cell >= 100) {
         set_cell(&board[row][col], 'F');
     }
@@ -366,9 +397,7 @@ int flag_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, 
         set_cell(&board[row][col], 'W');
     }
     else if (cell >= 30 && cell <= 48) {
-        //int mines = cell % 10;
         set_cell(&board[row][col], 'X');
-        //board[row][col] += mines;
     }
     return count_board_mines(rows, cols, board) - count_board_flags(rows, cols, board);
 }
@@ -385,10 +414,35 @@ bool is_solved(size_t rows, size_t cols, uint16_t board[rows][cols])
  *                         BONUS FUNCTIONS                        *
  * ************************************************************** */
 
+int generate_random_index(size_t limit)
+{
+    int num = rand() % limit;
+    return num;
+}
+
 int generate_random_board(size_t rows, size_t cols, uint16_t board[rows][cols], size_t mines)
 {
-    // TODO: Implement me
-    UNUSED(mines);
+    size_t set_mines = 0;
+    while (set_mines < mines) {
+        int row = generate_random_index(rows - 1);
+        int col = generate_random_index(cols - 1);
+
+        printf("row %d, col %d \n", row, col);
+
+        if (is_mine(board[row][col])) {
+            continue;
+        }
+        set_cell(&board[row][col], 'M');
+        set_mines += 1;
+    }
+
+    for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < cols; j++) {
+            if (!is_mine(board[i][j])) {
+                set_cell(&board[i][j], 'X');
+            }
+        }
+    }
 
     // The postprocess function should be called at the end of the generate random board function
     return postprocess(rows, cols, board);
