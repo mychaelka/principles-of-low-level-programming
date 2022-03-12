@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include <time.h>
 #include <stdlib.h>
 #include "minesweeper.h"
 
