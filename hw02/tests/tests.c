@@ -137,5 +137,101 @@ TEST(load_unrevealed_3by3_board)
 /* TODO: You should write your tests for specified other functions and values
  * in the similar manner. */
 
+TEST(mine_in_corner)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("MXXXX"
+                 "XMXXX"
+                 "XXXXX");
+
+    // THEN
+    ASSERT(load_board(size, size, board) == -1);
+}
+
+TEST(zero_mines)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("XXXXX"
+                 "XXXXX"
+                 "XXXXX");
+
+    // THEN
+    ASSERT(load_board(size, size, board) == -1);
+}
+
+TEST(wrong_number_surrounding_mines)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("X2MXX"
+                 "XMXXX"
+                 "XXX1X");
+
+    // THEN
+    ASSERT(load_board(size, size, board) == -1);
+}
+
+TEST(correct_number_surrounding_mines)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("X2MXX"
+                 "XMXXX"
+                 "XXM1X"
+                 "XXXXX"
+                 "X...X");
+
+    // THEN
+    ASSERT(load_board(size, size, board) == 3);
+
+    ASSERT(print_board(size, size, board) == 0);
+
+    ASSERT_FILE(stdout, "     0   1   2   3   4 \n"
+                        "   +---+---+---+---+---+\n"
+                        " 0 |XXX| 2 |XXX|XXX|XXX|\n"
+                        "   +---+---+---+---+---+\n"
+                        " 1 |XXX|XXX|XXX|XXX|XXX|\n"
+                        "   +---+---+---+---+---+\n"
+                        " 2 |XXX|XXX|XXX| 1 |XXX|\n"
+                        "   +---+---+---+---+---+\n"
+                        " 3 |XXX|XXX|XXX|XXX|XXX|\n"
+                        "   +---+---+---+---+---+\n"
+                        " 4 |XXX|   |   |   |XXX|\n"
+                        "   +---+---+---+---+---+\n");
+}
+
+TEST(all_mines_except_corners)
+{
+    // GIVEN
+    const size_t size = 4;
+    uint16_t board[4][4] = { 0 };
+    INPUT_STRING(".MM."
+                 "MMMM"
+                 "MMMM"
+                 ".MM.");
+
+    // THEN
+    ASSERT(load_board(size, size, board) == 12);
+    ASSERT(get_number(board[1][2]) == 0);
+    ASSERT(print_board(size, size, board) == 0);
+
+    ASSERT_FILE(stdout, "     0   1   2   3 \n"
+                        "   +---+---+---+---+\n"
+                        " 0 | 3 |XXX|XXX| 3 |\n"
+                        "   +---+---+---+---+\n"
+                        " 1 |XXX|XXX|XXX|XXX|\n"
+                        "   +---+---+---+---+\n"
+                        " 2 |XXX|XXX|XXX|XXX|\n"
+                        "   +---+---+---+---+\n"
+                        " 3 | 3 |XXX|XXX| 3 |\n"
+                        "   +---+---+---+---+\n");
+}
+
 /* If you've made it down here I would also would like to tell you the meaning
  * of life is 42. */
