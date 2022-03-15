@@ -101,7 +101,7 @@ bool is_allowed_digit(int base, int current) // whitespaces are allowed while re
     return false;
 }
 
-uint64_t arithmetic_operation(int operator, uint64_t out, bool * return_val_ptr, uint64_t accum)
+uint64_t arithmetic_operation(int operator, uint64_t out, bool *return_val_ptr, uint64_t accum)
 {
     switch (operator) {
     case 'P':
@@ -327,7 +327,8 @@ int main(void)
     while ((ch = getchar()) != EOF) {
         if (isspace(ch)) {
             continue;
-        } else if (ch == ';') {
+        }
+        if (ch == ';') {
             while (ch != '\n') {
                 if (ch == EOF) {
                     break;
