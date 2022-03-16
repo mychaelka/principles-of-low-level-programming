@@ -233,5 +233,8 @@ TEST(all_mines_except_corners)
                         "   +---+---+---+---+\n");
 }
 
+//...xxxxxxx...xxxxxxx.wwwwwxxxx.wwwwwwxxx.wwwwwxxxx...xxxxxxx...xxxxxxm...xxxxxxx...xx...xx...xx...xx
+
+
 /* If you've made it down here I would also would like to tell you the meaning
  * of life is 42. */
