@@ -1,15 +1,14 @@
+#include "minesweeper.h"
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include "minesweeper.h"
 
 #define UNUSED(A) (void) (A)
 
 /* ************************************************************** *
  *                         HELP FUNCTIONS                         *
  * ************************************************************** */
-
 
 bool is_flag(uint16_t cell)
 {
@@ -39,8 +38,7 @@ int get_number(uint16_t cell)
 {
     if (is_mine(cell)) {
         return 0;
-    }
-    else {
+    } else {
         return cell % 10;
     }
 }
@@ -78,8 +76,7 @@ size_t set_stop(size_t index, size_t length)
  * returns number of unrevealed cells in board
  * @return number of occurrences of either mines or unrevealed cells
  */
-int count_surrounding(size_t rows, size_t cols, uint16_t board[rows][cols],
-                      size_t row, size_t col, bool mines)
+int count_surrounding(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col, bool mines)
 {
     size_t start_x = set_start(row);
     size_t end_x = set_stop(row, rows);
@@ -89,28 +86,24 @@ int count_surrounding(size_t rows, size_t cols, uint16_t board[rows][cols],
     int surrounding_mines = 0;
     int surrounding_unrevealed = 0;
 
-
     for (size_t x = start_x; x <= end_x; x++) {
         for (size_t y = start_y; y <= end_y; y++) {
             if ((x != row || y != col) && is_mine(board[x][y])) {
                 surrounding_mines += 1;
             }
-            if ((x != row || y != col) && (is_flag(board[x][y])
-                 || !(is_revealed(board[x][y])))) {
+            if ((x != row || y != col) && (is_flag(board[x][y]) || !(is_revealed(board[x][y])))) {
                 surrounding_unrevealed += 1;
             }
         }
     }
     if (mines) {
         return surrounding_mines;
-    }
-    else {
+    } else {
         return surrounding_unrevealed;
     }
 }
 
-int flag_surrounding_cells(size_t rows, size_t cols,
-                           uint16_t board[rows][cols], size_t row, size_t col)
+int flag_surrounding_cells(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
 {
     size_t start_x = set_start(row);
     size_t end_x = set_stop(row, rows);
@@ -121,10 +114,7 @@ int flag_surrounding_cells(size_t rows, size_t cols,
 
     for (size_t x = start_x; x <= end_x; x++) {
         for (size_t y = start_y; y <= end_y; y++) {
-
-            if ((x != row || y != col) && (!(is_revealed(board[x][y])))
-                && !(is_flag(board[x][y])))
-            {
+            if ((x != row || y != col) && (!(is_revealed(board[x][y]))) && !(is_flag(board[x][y]))) {
                 set_cell(&board[x][y], 'F');
                 flagged_mines += 1;
             }
@@ -190,25 +180,19 @@ int count_cells(size_t rows, size_t cols, uint16_t board[rows][cols], bool mines
     return -1;
 }
 
-
 void print_board_character(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
 {
     if (board[row][col] >= 30 && board[row][col] <= 48) {
         printf("|_F_");
-    }
-    else if (board[row][col] == 1000) {  // uncovered mine
+    } else if (board[row][col] == 1000) { // uncovered mine
         printf("| M ");
-    }
-    else if (board[row][col] == 0 || board[row][col] == 20) {
+    } else if (board[row][col] == 0 || board[row][col] == 20) {
         printf("|   ");
-    }
-    else if ((board[row][col] > 0 && board[row][col] <= 8)) {
+    } else if ((board[row][col] > 0 && board[row][col] <= 8)) {
         printf("| %d ", board[row][col]);
-    }
-    else if (board[row][col] > 20 && board[row][col] <= 28) {
+    } else if (board[row][col] > 20 && board[row][col] <= 28) {
         printf("| %d ", board[row][col] - 20);
-    }
-    else {
+    } else {
         printf("|XXX");
     }
 }
@@ -229,23 +213,23 @@ bool set_cell(uint16_t *cell, char val)
     int mines = *cell % 10;
 
     switch (toupper(val)) {
-        case 'F':
-            *cell = 40 + mines;
-            return true;
-        case 'W':
-            *cell = 30 + mines;
-            return true;
-        case 'X':
-            *cell = 10 + mines;
-            return true;
-        case 'M':
-            *cell = 100 + mines;
-            return true;
-        case '.':
-            *cell = 20 + mines;
-            return true;
-        default:
-            break;
+    case 'F':
+        *cell = 40 + mines;
+        return true;
+    case 'W':
+        *cell = 30 + mines;
+        return true;
+    case 'X':
+        *cell = 10 + mines;
+        return true;
+    case 'M':
+        *cell = 100 + mines;
+        return true;
+    case '.':
+        *cell = 20 + mines;
+        return true;
+    default:
+        break;
     }
 
     if (val >= '0' && val <= '8') {
@@ -261,7 +245,7 @@ int load_board(size_t rows, size_t cols, uint16_t board[rows][cols])
     size_t current_row = 0;
     size_t current_col = 0;
     size_t loaded = 0;
-    while (loaded != rows*cols) {
+    while (loaded != rows * cols) {
         int ch = getchar();
 
         if (ch == EOF) {
@@ -270,16 +254,15 @@ int load_board(size_t rows, size_t cols, uint16_t board[rows][cols])
 
         char current = (char) ch;
 
-        if (!set_cell(&board[current_row][current_col], current)) {  // invalid character
+        if (!set_cell(&board[current_row][current_col], current)) { // invalid character
             continue;
         }
         loaded += 1;
 
         if (current_col == (cols - 1)) {
-           current_row += 1;
-           current_col = 0;
-        }
-        else {
+            current_row += 1;
+            current_col = 0;
+        } else {
             current_col += 1;
         }
     }
@@ -310,21 +293,19 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
                 mines += 1;
             }
 
-            surrounding_mines = count_surrounding(rows, cols, board, i, j,
-                                                  true);
+            surrounding_mines = count_surrounding(rows, cols, board, i, j, true);
 
             if (board[i][j] <= 8) {
                 if ((surrounding_mines != board[i][j])) {
                     return -1;
                 }
-            }
-            else {
+            } else {
                 board[i][j] += surrounding_mines;
             }
         }
     }
     if (mines == 0) {
-        return -1 ;
+        return -1;
     }
     return mines;
 }
@@ -385,7 +366,7 @@ char show_cell(uint16_t cell)
     if ((cell >= 30 && cell <= 48)) {
         return 'F';
     }
-    if (cell > 0 && cell <= 8){
+    if (cell > 0 && cell <= 8) {
         return (char) cell;
     }
     if (cell > 20 && cell <= 28) {
@@ -405,16 +386,15 @@ int reveal_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row
         return reveal_single(&board[row][col]);
     }
     if ((board[row][col] >= 30 && board[row][col] <= 48) // flag
-        || (row >= rows || col >= cols)                  // wrong dimension
-        || (board[row][col] <= 8)) {                     // already revealed cell
+            || (row >= rows || col >= cols)              // wrong dimension
+            || (board[row][col] <= 8)) {                 // already revealed cell
 
         return -1;
     }
 
     if (board[row][col] == 10) {
         reveal_floodfill(rows, cols, board, row, col);
-    }
-    else if (board[row][col] > 10 && board[row][col] <= 18) {
+    } else if (board[row][col] > 10 && board[row][col] <= 18) {
         reveal_single(&board[row][col]);
     }
 
@@ -473,14 +453,14 @@ int flag_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, 
     if (cell <= 8) {
         return INT16_MIN;
     }
-    if (cell >= 100) { // this is mine
+    if (cell >= 100) {
         set_cell(&board[row][col], 'F');
-    }
-    else if (cell >= 10 && cell <= 18) { // not mine
+    } else if (cell >= 10 && cell <= 18) { // not mine
         set_cell(&board[row][col], 'W');
-    }
-    else if (cell >= 30 && cell <= 48) { // reverse already placed flag (doesn't matter if wrong)
+    } else if (cell >= 30 && cell <= 38) { // reverse wrong flag
         set_cell(&board[row][col], 'X');
+    } else if (cell >= 40 && cell <= 48) {
+        set_cell(&board[row][col], 'M'); // reverse correct flag
     }
     return count_cells(rows, cols, board, true, false, false)
            - count_cells(rows, cols, board, false, true, false);
@@ -489,7 +469,7 @@ int flag_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, 
 bool is_solved(size_t rows, size_t cols, uint16_t board[rows][cols])
 {
     return (count_cells(rows, cols, board, false, false, true)
-        == count_cells(rows, cols, board, true, false, false));
+            == count_cells(rows, cols, board, true, false, false));
 }
 
 /* ************************************************************** *
@@ -541,7 +521,7 @@ int load_board_for_finding_mines(size_t rows, size_t cols, uint16_t board[rows][
     size_t current_row = 0;
     size_t current_col = 0;
     size_t loaded = 0;
-    while (loaded != rows*cols) {
+    while (loaded != rows * cols) {
         int ch = getchar();
 
         if (ch == EOF) {
@@ -553,16 +533,14 @@ int load_board_for_finding_mines(size_t rows, size_t cols, uint16_t board[rows][
         if (toupper(current) == 'X' || current <= '8') {
             set_cell(&board[current_row][current_col], current);
             loaded += 1;
-        }
-        else {
+        } else {
             continue;
         }
 
         if (current_col == (cols - 1)) {
             current_row += 1;
             current_col = 0;
-        }
-        else {
+        } else {
             current_col += 1;
         }
     }
@@ -583,10 +561,8 @@ int find_mines(size_t rows, size_t cols, uint16_t board[rows][cols])
 
     for (size_t row = 0; row < rows; row++) {
         for (size_t col = 0; col < cols; col++) {
-
             if (is_revealed(board[row][col])) {
-                surrounding_unrevealed = count_surrounding(rows, cols, board,
-                                                           row, col, false);
+                surrounding_unrevealed = count_surrounding(rows, cols, board, row, col, false);
 
                 if (surrounding_unrevealed == get_number(board[row][col])) {
                     flagged_mines += flag_surrounding_cells(rows, cols, board, row, col);
