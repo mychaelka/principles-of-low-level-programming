@@ -233,6 +233,69 @@ TEST(all_mines_except_corners)
                         "   +---+---+---+---+\n");
 }
 
+TEST(set_cell_flagged)
+{
+    // GIVEN
+    uint16_t dummy_cell = 0;
+    // DO
+    ASSERT(set_cell(&dummy_cell, 'f'));
+    // THEN
+    ASSERT(is_flag(dummy_cell));
+}
+
+TEST(set_cell_number)
+{
+    // GIVEN
+    uint16_t dummy_cell = 0;
+    // DO
+    ASSERT(set_cell(&dummy_cell, '8'));
+    // THEN
+    ASSERT(is_revealed(dummy_cell));
+}
+
+TEST(set_cell_wrong_number)
+{
+    // GIVEN
+    uint16_t dummy_cell = 0;
+    // DO
+    ASSERT(!set_cell(&dummy_cell, '9'));
+}
+
+TEST(postprocess_on_5x5_board)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    fill_board_value(size, size, board, '.'); // function from test utils
+    set_cell(&(board[1][1]), 'M');
+    set_cell(&(board[2][1]), 'M');
+    set_cell(&(board[1][4]), 'M');
+    set_cell(&(board[4][2]), 'M');
+    set_cell(&(board[1][3]), 'M');
+    // THEN
+    ASSERT(postprocess(size, size, board) == 5);
+}
+
+TEST(find_mines_1)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxxxx000xx221xxxx1xxxxx");
+    // THEN
+    ASSERT(find_mines(size, size, board) == 2);
+}
+
+TEST(find_mines_fail)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxxxx000xxx21xxxxxxxxxx");
+    // THEN
+    ASSERT(find_mines(size, size, board) == -1);
+}
+
 //...xxxxxxx...xxxxxxx.wwwwwxxxx.wwwwwwxxx.wwwwwxxxx...xxxxxxx...xxxxxxm...xxxxxxx...xx...xx...xx...xx
 
 
