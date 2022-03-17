@@ -573,7 +573,7 @@ int load_board_for_finding_mines(size_t rows, size_t cols, uint16_t board[rows][
     return 0;
 }
 
-int find_mines(size_t rows, size_t cols, uint16_t board[rows][cols]) // re-do this function
+int find_mines(size_t rows, size_t cols, uint16_t board[rows][cols])
 {
     if (load_board_for_finding_mines(rows, cols, board) < 0) {
         return -1;
