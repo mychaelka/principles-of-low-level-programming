@@ -296,7 +296,39 @@ TEST(find_mines_fail)
     ASSERT(find_mines(size, size, board) == -1);
 }
 
+
+TEST(find_mines_irregular_shape_fail)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[7][5] = { 0 };
+    INPUT_STRING("xxxxxxx000xxx21xxxxxxxxxxx111xx1x1x");
+    // THEN
+    ASSERT(find_mines(7, size, board) == -1);
+}
+
+TEST(find_mines_irregular_shape_success)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[7][5] = { 0 };
+    INPUT_STRING("xxxxxxx000xxx21xxxxxx000xx111xx1x1x");
+    // THEN
+    ASSERT(find_mines(7, size, board) == 1);
+}
+
+TEST(find_mines_corner)
+{
+    // GIVEN
+    const size_t size = 5;
+    uint16_t board[7][5] = { 0 };
+    INPUT_STRING("xxxxxxx000xxx21xxxxxx0000x1111xx01x");
+    // THEN
+    ASSERT(find_mines(7, size, board) == 2);
+}
 //...xxxxxxx...xxxxxxx.wwwwwxxxx.wwwwwwxxx.wwwwwxxxx...xxxxxxx...xxxxxxm...xxxxxxx...xx...xx...xx...xx
+
+
 
 
 /* If you've made it down here I would also would like to tell you the meaning
