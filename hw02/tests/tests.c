@@ -326,6 +326,81 @@ TEST(find_mines_corner)
     // THEN
     ASSERT(find_mines(7, size, board) == 2);
 }
+
+TEST(reveal_cell_mine_and_others)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    INPUT_STRING("xmxxxxxxx");
+    // THEN
+    ASSERT(load_board(size, size, board) == 1);
+    ASSERT(reveal_cell(size, size, board, 0, 1) == 1);
+    ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
+}
+
+TEST(reveal_cell_invalid_cases)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    INPUT_STRING("xmxfxxww.");
+    // THEN
+    ASSERT(load_board(size, size, board) == 2);
+    ASSERT(reveal_cell(size, size, board, 2, 1) == -1);
+    ASSERT(reveal_cell(size, size, board, 1, 0) == -1);
+    ASSERT(reveal_cell(size, size, board, 0, 1) == 1);
+    ASSERT(reveal_cell(size, size, board, 4, 1) == -1);
+    ASSERT(reveal_cell(size, size, board, 2, 2) == -1);
+    ASSERT(reveal_cell(size, size, board, 2, 1) == -1);
+    ASSERT(is_revealed(board[0][1]));
+}
+
+TEST(reveal_cell_invalid_cases2)
+{
+    const size_t size = 4;
+    uint16_t board[4][4] = { 0 };
+    INPUT_STRING("x22x xmmx xxxx xx.x");
+    ASSERT(load_board(size, size, board) == 2);
+    ASSERT(reveal_cell(size, size, board, 3, 2) == -1);
+}
+
+
+TEST(reveal_cell_only_mines)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    // THEN
+    fill_board_value(size, size, board, 'm');
+    set_cell(&(board[0][0]), 'x');
+    ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
+    ASSERT(reveal_cell(size, size, board, 1, 1) == 1);
+    ASSERT(is_revealed(board[1][1]));
+    ASSERT(!is_revealed(board[0][1]));
+}
+
+TEST(reveal_cell_mines_and_flags)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    INPUT_STRING("xww wwf wmw");
+    //ASSERT(reveal_single() == -1);
+    ASSERT(load_board(size, size, board) == 2);
+    ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
+    ASSERT(is_revealed(board[1][0]));
+    ASSERT(is_revealed(board[1][1]));
+    ASSERT(is_revealed(board[0][1]));
+    ASSERT(!is_revealed(board[1][2]));
+}
+
+TEST(reveal_single_invalid_cases)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    INPUT_STRING("xmxfxxww.");
+    // THEN
+    ASSERT(load_board(size, size, board) == 2);
+    //ASSERT(reveal_single() == -1);
+    ASSERT(!is_revealed(board[0][1]));
+}
 //...xxxxxxx...xxxxxxx.wwwwwxxxx.wwwwwwxxx.wwwwwxxxx...xxxxxxx...xxxxxxm...xxxxxxx...xx...xx...xx...xx
 
 

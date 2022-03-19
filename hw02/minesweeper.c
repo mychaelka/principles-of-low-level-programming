@@ -10,26 +10,17 @@
 
 bool is_flag(uint16_t cell)
 {
-    if (cell >= 30 && cell <= 48) {
-        return true;
-    }
-    return false;
+    return (cell >= 30 && cell <= 48);
 }
 
 bool is_mine(uint16_t cell)
 {
-    if (cell >= 100 || (cell >= 40 && cell <= 48)) {
-        return true;
-    }
-    return false;
+    return (cell >= 100 || (cell >= 40 && cell <= 48));
 }
 
 bool is_revealed(uint16_t cell)
 {
-    if (cell <= 8 || (cell >= 20 && cell <= 28)) {
-        return true;
-    }
-    return false;
+    return (cell <= 8 || (cell >= 20 && cell <= 28) || cell == 1000);
 }
 
 int get_number(uint16_t cell)
@@ -211,6 +202,10 @@ bool set_cell(uint16_t *cell, char val)
     // uncovered field = 0 -- 8
     // uncovered field without known mines = 20 -- 28
 
+    if (cell == NULL) {
+        return false;
+    }
+
     int mines = *cell % 10;
 
     switch (toupper(val)) {
@@ -383,12 +378,16 @@ char show_cell(uint16_t cell)
 
 int reveal_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row, size_t col)
 {
+    if (row >= rows || col >= cols) {
+        return -1;
+    }
+
     if (board[row][col] >= 100) {
         return reveal_single(&board[row][col]);
     }
-    if ((board[row][col] >= 30 && board[row][col] <= 48) // flag
-            || (row >= rows || col >= cols)              // wrong dimension
-            || (board[row][col] <= 8)) {                 // already revealed cell
+    if ((board[row][col] >= 30 && board[row][col] <= 48)    // flag
+         || (board[row][col] <= 8)                           // already revealed cell
+         || (board[row][col] >= 20 && board[row][col] <= 28)) { // already revealed cell
 
         return -1;
     }
@@ -404,13 +403,16 @@ int reveal_cell(size_t rows, size_t cols, uint16_t board[rows][cols], size_t row
 
 int reveal_single(uint16_t *cell)
 {
+    if (cell == NULL) {
+        return -1;
+    }
+
     if (*cell >= 100) {
         *cell = 1000; // change to revealed mine and lose
         return 1;
     }
-    if (is_flag(*cell)) {
-        *cell -= (*cell / 10) * 10; // changes its value to 0-8 (revealed cell)
-        return 0;                   // happens only in floodfill (wrong flag)!
+    if (is_flag(*cell) || is_revealed(*cell)) {
+        return -1;
     }
     if (*cell >= 10 && *cell <= 18) {
         *cell -= 10;
@@ -425,7 +427,10 @@ void reveal_floodfill(size_t rows, size_t cols, uint16_t board[rows][cols], size
     if ((board[row][col] > 10 && board[row][col] <= 18)) {
         reveal_single(&board[row][col]);
     }
-    if (board[row][col] == 10 || is_flag(board[row][col])) {
+    if (board[row][col] == 10 || (board[row][col] >= 30 && board[row][col] <= 38)) {
+        if (is_flag(board[row][col])) {
+            flag_cell(rows, cols, board, row, col);
+        }
         reveal_single(&board[row][col]);
 
         for (size_t x = set_start(row); x <= set_stop(row, rows); x++) {
