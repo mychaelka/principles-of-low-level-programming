@@ -364,17 +364,54 @@ TEST(reveal_cell_invalid_cases2)
 }
 
 
-TEST(reveal_cell_only_mines)
-{
+TEST(reveal_cell_only_mines) {
     const size_t size = 3;
-    uint16_t board[3][3] = { 0 };
+    uint16_t board[3][3] = {0};
     // THEN
-    fill_board_value(size, size, board, 'm');
-    set_cell(&(board[0][0]), 'x');
+    fill_board_value(size, size, board, 'x');
+    set_cell(&(board[1][2]), 'm');
+    set_cell(&(board[1][1]), 'm');
+    set_cell(&(board[2][1]), 'm');
     ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
     ASSERT(reveal_cell(size, size, board, 1, 1) == 1);
     ASSERT(is_revealed(board[1][1]));
-    ASSERT(!is_revealed(board[0][1]));
+    ASSERT(is_revealed(board[0][0]));
+    set_cell(&(board[2][1]), 'f');
+    ASSERT(!is_revealed(board[2][1]));
+    ASSERT(reveal_cell(size, size, board, 2, 1) == -1);
+    ASSERT(!is_revealed(board[2][1]));
+    set_cell(&(board[2][0]), '.');
+    ASSERT(is_revealed(board[2][0]));
+    ASSERT(reveal_cell(size, size, board, 2, 0) == -1);
+    ASSERT(is_revealed(board[2][0]));
+}
+
+TEST(reveal_cell_floodfill) {
+    const size_t size = 5;
+    uint16_t board[5][5] = {0};
+    INPUT_STRING("xxxxx xxxxx xmxxx xxmxx xxxxx");
+    ASSERT(load_board(size, size, board) == 2);
+    ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
+    ASSERT(is_revealed(board[1][1]));
+    ASSERT(is_revealed(board[0][0]));
+    ASSERT(!is_revealed(board[2][0]));
+    ASSERT(is_revealed(board[2][2]));
+    ASSERT(!is_revealed(board[2][1]));
+    ASSERT(!is_revealed(board[3][2]));
+}
+
+TEST(reveal_cell_floodfill_flags) {
+    const size_t size = 5;
+    uint16_t board[5][5] = {0};
+    INPUT_STRING("xxwxx xxxxx xmxxx xxmxx xxxfx");
+    ASSERT(load_board(size, size, board) == 3);
+    ASSERT(reveal_cell(size, size, board, 0, 0) == 0);
+    ASSERT(is_revealed(board[1][1]));
+    ASSERT(is_revealed(board[0][2]));
+    ASSERT(!is_revealed(board[2][0]));
+    ASSERT(is_revealed(board[2][2]));
+    ASSERT(!is_revealed(board[2][1]));
+    ASSERT(!is_revealed(board[3][2]));
 }
 
 TEST(reveal_cell_mines_and_flags)
@@ -401,10 +438,121 @@ TEST(reveal_single_invalid_cases)
     //ASSERT(reveal_single() == -1);
     ASSERT(!is_revealed(board[0][1]));
 }
-//...xxxxxxx...xxxxxxx.wwwwwxxxx.wwwwwwxxx.wwwwwxxxx...xxxxxxx...xxxxxxm...xxxxxxx...xx...xx...xx...xx
 
+TEST(postprocess_valid_cases)
+{
+    const size_t size = 3;
+    uint16_t board[3][3] = { 0 };
+    // THEN
+    fill_board_value(size, size, board, 'm');
+    set_cell(&(board[0][0]), 'x');
+    set_cell(&(board[0][2]), 'x');
+    set_cell(&(board[2][0]), 'x');
+    set_cell(&(board[2][2]), 'x');
+    ASSERT(postprocess(size, size, board) == 5);
+    set_cell(&(board[2][1]), 'f');
+    ASSERT(postprocess(size, size, board) == 5);
+    set_cell(&(board[1][1]), 'w');
+    ASSERT(postprocess(size, size, board) == 4);
+    fill_board_value(size, size, board, 'X');
+    set_cell(&(board[0][1]), 'M');
+    set_cell(&(board[1][0]), 'M');
+    ASSERT(postprocess(size, size, board) == 2);
+    set_cell(&(board[2][0]), 'M');
+    ASSERT(postprocess(size, size, board) == -1);
+}
 
+TEST(load_board_unrevealed)
+{
+    const size_t size = 4;
+    uint16_t board[4][4] = { 0 };
+    INPUT_STRING("xxxx xxmx xxxx xmxx");
+    // THEN
+    ASSERT(load_board(size, size, board) == 2);
+    ASSERT(!is_revealed(board[0][1]));
+    ASSERT(!is_revealed(board[1][2]));
+    ASSERT(!is_revealed(board[0][0]));
+    set_cell(&(board[0][1]), 'F');
+    ASSERT(!is_revealed(board[0][1]));
+    ASSERT(!set_cell(NULL, 'F'));
+    ASSERT(!set_cell(&board[0][1], NULL));
+}
 
+TEST(reveal_single_invalid)
+{
+    const size_t size = 4;
+    uint16_t board[4][4] = { 0 };
+    INPUT_STRING("xmxx fxxf ww.1 ....");
+    // THEN
+    ASSERT(load_board(size, size, board) == 3);
+    ASSERT(reveal_single(&board[1][0]) == -1);
+    ASSERT(!is_revealed(board[1][0]));
+    ASSERT(reveal_single(&board[3][2]) == -1);
+    ASSERT(is_revealed(board[3][2]));
+    ASSERT(reveal_single(&board[2][3]) == -1);
+    ASSERT(is_revealed(board[2][3]));
+    ASSERT(reveal_single(&board[3][3]) == -1);
+    ASSERT(is_revealed(board[3][3]));
+    ASSERT(reveal_single(&board[6][3]) == -1);
+    ASSERT(reveal_single(&board[0][1]) == 1);
+    ASSERT(is_revealed(board[0][1]));
+}
+
+TEST(show_cell_all)
+{
+    const size_t size = 4;
+    uint16_t board[4][4] = { 0 };
+    INPUT_STRING(".3mx xff2 xwxx x..x");
+    // THEN
+    ASSERT(load_board(size, size, board) == 3);
+    ASSERT(show_cell(board[0][0]) == '1');
+    ASSERT(show_cell(board[0][1]) == '3');
+    ASSERT(show_cell(board[0][2]) == 'X');
+    ASSERT(show_cell(board[0][3]) == 'X');
+    ASSERT(show_cell(board[1][2]) == 'F');
+    ASSERT(show_cell(board[1][3]) == '2');
+    ASSERT(show_cell(board[2][1]) == 'F');
+    ASSERT(show_cell(board[3][0]) == 'X');
+    ASSERT(show_cell(board[3][1]) == ' ');
+    ASSERT(show_cell(board[3][2]) == ' ');
+    reveal_cell(size, size, board, 0, 2);
+    ASSERT(show_cell(board[0][2]) == 'M');
+}
+
+TEST(find_mines_two_neighboring) {
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxx xxxxx 1221x 1xx1x 1221x");
+    ASSERT(find_mines(size, size, board) == 2);
+}
+
+TEST(find_mines_invalid_chars) {
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxx xxxdttttrastrsatsatxx 1221x 1xx1x 1221x");
+    ASSERT(find_mines(size, size, board) == 2);
+}
+
+TEST(find_mines_mine_in_corner) {
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxx xxxxx xxxxx xx011 xx01x");
+    ASSERT(find_mines(size, size, board) == 1);
+}
+
+TEST(find_mines_one_number) {
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("xxxxx xxxxx x8xxx xxxxx xxxxx");
+    ASSERT(find_mines(size, size, board) == 8);
+}
+
+TEST(find_mines_one_number2) {
+    const size_t size = 5;
+    uint16_t board[5][5] = { 0 };
+    INPUT_STRING("3xxxx xxxxx xxxxx xxxxx xxxxx");
+    ASSERT(find_mines(size, size, board) == 3);
+}
 
 /* If you've made it down here I would also would like to tell you the meaning
  * of life is 42. */
