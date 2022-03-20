@@ -312,7 +312,7 @@ int postprocess(size_t rows, size_t cols, uint16_t board[rows][cols])
                     return -1;
                 }
             } else {
-                board[i][j] += surrounding_mines;
+                board[i][j] = (board[i][j] / 10) * 10 + surrounding_mines;
             }
         }
     }
@@ -505,12 +505,11 @@ int generate_random_board(size_t rows, size_t cols, uint16_t board[rows][cols], 
         return -1;
     }
 
-    size_t set_mines = 0;
-
-    if (mines >
-            96) { // mines can't be in corners, that's why maximum possible is 96
+    if (mines > rows * cols - 4 || mines == 0) { // mines can't be in corners
         return -1;
     }
+
+    size_t set_mines = 0;
 
     while (set_mines < mines) {
         int row = generate_random_index(rows); // randomly generate mine indices
