@@ -75,15 +75,48 @@ void demo2()
     }
 
     printf("Magic number: 0x%x\n", get_header(capture)->magic_number);
+    printf("Packet count: %zu\n", packet_count(capture));
     printf("Total number of bytes transferred in this capture: %zu.\n", data_transfered(capture));
+
+
+    struct capture_t *filtered = malloc(sizeof(struct capture_t));
+    filter_protocol(capture, filtered, 6);
+
+    printf("Magic number: 0x%x\n", get_header(filtered)->magic_number);
+    printf("Packet count: %zu\n", packet_count(filtered));
+    printf("Total number of bytes transferred in this capture: %zu.\n", data_transfered(filtered));
+
+
+    struct capture_t *bigger_than = malloc(sizeof(struct capture_t));
+    filter_larger_than(filtered, bigger_than, 90);
+
+    printf("Magic number: 0x%x\n", get_header(bigger_than)->magic_number);
+    printf("Packet count: %zu\n", packet_count(bigger_than));
+    printf("Total number of bytes transferred in this capture: %zu.\n", data_transfered(bigger_than));
+
+    destroy_capture(bigger_than);
+    free(bigger_than);
+
+
+    struct capture_t *filtered_from_to = malloc(sizeof(struct capture_t));
+    filter_from_to(
+            capture,
+            filtered_from_to,
+            (uint8_t[4]){ 74U, 125U, 19U, 17U },
+            (uint8_t[4]){ 172U, 16U, 11U, 12U });
+
+    printf("Packet count filtered from to: %zu\n", packet_count(filtered_from_to));
+    destroy_capture(filtered);
+    free(filtered);
+    destroy_capture(filtered_from_to);
+    free(filtered_from_to);
     destroy_capture(capture);
     free(capture);
 }
 
+
 int main()
 {
     demo1();
-
-    // TODO: Uncomment this after you implement part 1 of the assignment
-    // demo2();
+    demo2();
 }
