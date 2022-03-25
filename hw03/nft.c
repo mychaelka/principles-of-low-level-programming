@@ -10,5 +10,6 @@ int main()
     if (init_context(context, TEST_FILE) != PCAP_SUCCESS) {
         return EXIT_FAILURE;
     }
+
     return EXIT_SUCCESS;
 }

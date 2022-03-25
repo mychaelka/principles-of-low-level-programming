@@ -7,7 +7,7 @@
 struct capture_t {
     size_t number_of_packets;
     struct pcap_header_t *pcap_header;
-    struct packet_t packets[];
+    struct packet_t *packets;
 };
 
 
