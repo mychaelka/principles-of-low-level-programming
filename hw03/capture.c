@@ -196,17 +196,67 @@ int filter_from_to(
     return 0;
 }
 
+bool satisfies_mask(uint8_t network_prefix[4], uint8_t mask[4], uint8_t ip[4])
+{
+    for (int ip_part = 0; ip_part < 4; ip_part++) {
+        if ((ip[ip_part] & mask[ip_part]) != (network_prefix[ip_part] & mask[ip_part])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void create_mask(uint8_t length, uint8_t result[4])
+{
+    uint32_t mask = 1;
+    if (length == 32) {
+        mask = UINT32_MAX;
+    }
+    else {
+        mask <<= length;
+        mask -= 1;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        result[i] = (mask & 255);
+        mask >>= 8;
+    }
+}
+
 int filter_from_mask(
         const struct capture_t *const original,
         struct capture_t *filtered,
         uint8_t network_prefix[4],
         uint8_t mask_length)
 {
-    UNUSED(original);
-    UNUSED(filtered);
-    UNUSED(network_prefix);
-    UNUSED(mask_length);
-    return -1;
+    uint8_t mask[4] = { 0 };
+    create_mask(mask_length, mask);
+
+    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
+    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+
+    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
+
+    filtered->packets = malloc(sizeof(struct packet_t));
+    memset(filtered->packets, 0, sizeof(struct packet_t));
+
+    int j = 0;
+    filtered->number_of_packets = 0;
+
+    for (size_t i = 0; i < original->number_of_packets; i++) {
+        if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->src_addr)) {
+            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            j++;
+            filtered->number_of_packets++;
+            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+        }
+    }
+
+    return 0;
 }
 
 int filter_to_mask(
@@ -215,17 +265,58 @@ int filter_to_mask(
         uint8_t network_prefix[4],
         uint8_t mask_length)
 {
-    UNUSED(original);
-    UNUSED(filtered);
-    UNUSED(network_prefix);
-    UNUSED(mask_length);
-    return -1;
+    uint8_t mask[4] = { 0 };
+    create_mask(mask_length, mask);
+
+    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
+    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+
+    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
+
+    filtered->packets = malloc(sizeof(struct packet_t));
+    memset(filtered->packets, 0, sizeof(struct packet_t));
+
+    int j = 0;
+    filtered->number_of_packets = 0;
+
+    for (size_t i = 0; i < original->number_of_packets; i++) {
+        if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->dst_addr)) {
+            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            j++;
+            filtered->number_of_packets++;
+            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+        }
+    }
+
+    return 0;
 }
 
 int print_flow_stats(const struct capture_t *const capture)
 {
-    UNUSED(capture);
-    return -1;
+    for (size_t i = 0; i < capture->number_of_packets; i++) {
+        uint8_t *src = capture->packets[i].ip_header->src_addr;
+        uint8_t *dst = capture->packets[i].ip_header->dst_addr;
+
+        struct capture_t *filtered = malloc(sizeof(struct capture_t));
+        filter_from_to(capture, filtered, src, dst);
+
+        // helper function (print from_to)
+        for (int j = 0; j < 4; j++) {
+            printf("%d.", src[j]);
+        }
+        printf(" -> ");
+        for (int j = 0; j < 4; j++) {
+            printf("%d.", dst[j]);
+        }
+        printf(" : ");
+        printf("%zu\n", packet_count(filtered));
+        destroy_capture(filtered);
+    }
+    return 0;
 }
 
 int print_longest_flow(const struct capture_t *const capture)
