@@ -115,8 +115,36 @@ void demo2()
 }
 
 
+void demo3()
+{
+    struct capture_t *capture = malloc(sizeof(struct capture_t));
+    load_capture(capture, TEST_FILE);
+
+    uint8_t network_prefix[4] = {216, 34, 181, 45};
+    struct capture_t *filtered_from_mask = malloc(sizeof(struct capture_t));
+    filter_from_mask(capture, filtered_from_mask, network_prefix, 32);
+
+    for (size_t current_packet = 0; current_packet < packet_count(filtered_from_mask); current_packet++) {
+        struct packet_t *packet = get_packet(filtered_from_mask, current_packet);
+        print_packet_info(packet);
+    }
+
+    printf("Magic number: 0x%x\n", get_header(filtered_from_mask)->magic_number);
+    printf("Packet count: %zu\n", packet_count(filtered_from_mask));
+    printf("Total number of bytes transferred in this capture: %zu.\n", data_transfered(filtered_from_mask));
+
+    print_flow_stats(capture);
+
+
+    destroy_capture(capture);
+    free(capture);
+    destroy_capture(filtered_from_mask);
+    free(filtered_from_mask);
+}
+
 int main()
 {
-    demo1();
-    demo2();
+    //demo1();
+    //demo2();
+    demo3();
 }
