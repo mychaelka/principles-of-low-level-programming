@@ -4,6 +4,12 @@
 
 #define UNUSED(x) ((void) x)
 
+struct packet_flow_durations {
+    uint8_t *src_addr[4];
+    uint8_t *dst_addr[4];
+    uint32_t *durations;
+};
+
 int load_capture(struct capture_t *capture, const char *filename)
 {
     // initialize the pcap context - open the file
@@ -295,32 +301,140 @@ int filter_to_mask(
     return 0;
 }
 
+
 int print_flow_stats(const struct capture_t *const capture)
 {
     for (size_t i = 0; i < capture->number_of_packets; i++) {
         uint8_t *src = capture->packets[i].ip_header->src_addr;
         uint8_t *dst = capture->packets[i].ip_header->dst_addr;
 
+        // src - dest pair was already counted
+        bool counted = false;
+        for (size_t j = 0; j < i; j++) {
+            if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
+                && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
+                counted = true;
+                break;
+            }
+        }
+
+        if (counted) {
+            continue;
+        }
+
         struct capture_t *filtered = malloc(sizeof(struct capture_t));
         filter_from_to(capture, filtered, src, dst);
 
         // helper function (print from_to)
         for (int j = 0; j < 4; j++) {
-            printf("%d.", src[j]);
+            if (j == 3) {
+                printf("%d", src[j]);
+            }
+            else {
+                printf("%d.", src[j]);
+            }
         }
         printf(" -> ");
         for (int j = 0; j < 4; j++) {
-            printf("%d.", dst[j]);
+            if (j == 3) {
+                printf("%d", dst[j]);
+            }
+            else {
+                printf("%d.", dst[j]);
+            }
         }
         printf(" : ");
         printf("%zu\n", packet_count(filtered));
+
+
         destroy_capture(filtered);
+        free(filtered);
+
     }
     return 0;
 }
 
 int print_longest_flow(const struct capture_t *const capture)
 {
-    UNUSED(capture);
-    return -1;
+    uint8_t flow_src_addr[4] = {0, 0, 0, 0};
+    uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
+    uint32_t duration_sec = 0;
+    uint32_t duration_usec = 0;
+    uint32_t start_timestamp_sec = 0;
+    uint32_t start_timestamp_usec = 0;
+    uint32_t end_timestamp_sec = 0;
+    uint32_t end_timestamp_usec = 0;
+
+    for (size_t i = 0; i < capture->number_of_packets; i++) {
+        uint8_t *src = capture->packets[i].ip_header->src_addr;
+        uint8_t *dst = capture->packets[i].ip_header->dst_addr;
+
+        // src - dest pair was already counted
+        bool counted = false;
+        for (size_t j = 0; j < i; j++) {
+            if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
+                && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
+                counted = true;
+                break;
+            }
+        }
+
+        if (counted) {
+            continue;
+        }
+
+        struct capture_t *filtered = malloc(sizeof(struct capture_t));
+        filter_from_to(capture, filtered, src, dst);
+
+        // helper function -> count_duration
+        uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
+        uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
+        uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
+        uint32_t end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
+
+        uint32_t current_duration_sec = end_sec - start_sec;
+        uint32_t current_duration_usec = end_usec - start_usec;
+
+        destroy_capture(filtered);
+        free(filtered);
+
+        // helper function -> compare durations
+        if (current_duration_sec >= duration_sec) {
+            if (current_duration_sec == duration_sec) {
+                if (current_duration_usec <= duration_usec) {
+                    continue;
+                }
+            }
+            for (int k = 0; k < 4; k++) {
+                flow_src_addr[k] = src[k];
+                flow_dst_addr[k] = dst[k];
+                start_timestamp_sec = start_sec;
+                start_timestamp_usec = start_usec;
+                end_timestamp_sec = end_sec;
+                end_timestamp_usec = end_usec;
+            }
+
+        }
+    }
+
+    for (int j = 0; j < 4; j++) {
+        if (j == 3) {
+            printf("%d", flow_src_addr[j]);
+        }
+        else {
+            printf("%d.", flow_src_addr[j]);
+        }
+    }
+    printf(" -> ");
+    for (int j = 0; j < 4; j++) {
+        if (j == 3) {
+            printf("%d", flow_dst_addr[j]);
+        }
+        else {
+            printf("%d.", flow_dst_addr[j]);
+        }
+    }
+    printf(" : ");
+    printf("%u:%u - %u:%u\n", start_timestamp_sec, start_timestamp_usec, end_timestamp_sec, end_timestamp_usec);
+    return 0;
 }

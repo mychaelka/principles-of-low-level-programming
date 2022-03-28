@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include "capture.h"
 
-#define TEST_FILE "test.pcap"
+//#define TEST_FILE "test.pcap"
+#define TEST_FILE "mytest.pcap"
 
 void demo1()
 {
@@ -142,9 +143,26 @@ void demo3()
     free(filtered_from_mask);
 }
 
+void demo4()
+{
+    struct capture_t *capture = malloc(sizeof(struct capture_t));
+    load_capture(capture, TEST_FILE);
+
+    print_longest_flow(capture);
+
+    for (size_t current_packet = 0; current_packet < packet_count(capture); current_packet++) {
+        struct packet_t *packet = get_packet(capture, current_packet);
+        print_packet_info(packet);
+    }
+
+    destroy_capture(capture);
+    free(capture);
+}
+
 int main()
 {
     //demo1();
     //demo2();
-    demo3();
+    //demo3();
+    demo4();
 }
