@@ -2,13 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define UNUSED(x) ((void) x)
-
-struct packet_flow_durations {
-    uint8_t *src_addr[4];
-    uint8_t *dst_addr[4];
-    uint32_t *durations;
-};
 
 int load_capture(struct capture_t *capture, const char *filename)
 {
@@ -49,9 +42,9 @@ int load_capture(struct capture_t *capture, const char *filename)
             destroy_context(context);
             return -1;
         }
-        capture->number_of_packets++; // increase number of loaded packets
+        capture->number_of_packets++;
         i++;
-        capture->packets = realloc(capture->packets, (i + 1) * sizeof(struct packet_t)); // space for new pkt
+        capture->packets = realloc(capture->packets, (i + 1) * sizeof(struct packet_t));
         memset(capture->packets + i, 0, sizeof(struct packet_t));
     }
 
@@ -301,6 +294,27 @@ int filter_to_mask(
     return 0;
 }
 
+void print_from_to_row(uint8_t *src, uint8_t *dst)
+{
+    for (int j = 0; j < 4; j++) {
+        if (j == 3) {
+            printf("%d", src[j]);
+        }
+        else {
+            printf("%d.", src[j]);
+        }
+    }
+    printf(" -> ");
+    for (int j = 0; j < 4; j++) {
+        if (j == 3) {
+            printf("%d", dst[j]);
+        }
+        else {
+            printf("%d.", dst[j]);
+        }
+    }
+    printf(" : ");
+}
 
 int print_flow_stats(const struct capture_t *const capture)
 {
@@ -325,27 +339,8 @@ int print_flow_stats(const struct capture_t *const capture)
         struct capture_t *filtered = malloc(sizeof(struct capture_t));
         filter_from_to(capture, filtered, src, dst);
 
-        // helper function (print from_to)
-        for (int j = 0; j < 4; j++) {
-            if (j == 3) {
-                printf("%d", src[j]);
-            }
-            else {
-                printf("%d.", src[j]);
-            }
-        }
-        printf(" -> ");
-        for (int j = 0; j < 4; j++) {
-            if (j == 3) {
-                printf("%d", dst[j]);
-            }
-            else {
-                printf("%d.", dst[j]);
-            }
-        }
-        printf(" : ");
-        printf("%zu\n", packet_count(filtered));
-
+        print_from_to_row(src, dst);
+        printf("%lu\n", packet_count(filtered));
 
         destroy_capture(filtered);
         free(filtered);
@@ -399,12 +394,13 @@ int print_longest_flow(const struct capture_t *const capture)
         free(filtered);
 
         // helper function -> compare durations
-        if (current_duration_sec >= duration_sec) {
-            if (current_duration_sec == duration_sec) {
-                if (current_duration_usec <= duration_usec) {
-                    continue;
-                }
+        if (current_duration_sec == duration_sec) {
+            if (current_duration_usec <= duration_usec) {
+                continue;
             }
+        }
+
+        if (current_duration_sec >= duration_sec) {
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
@@ -412,29 +408,14 @@ int print_longest_flow(const struct capture_t *const capture)
                 start_timestamp_usec = start_usec;
                 end_timestamp_sec = end_sec;
                 end_timestamp_usec = end_usec;
+                duration_sec = current_duration_sec;
+                duration_usec = current_duration_usec;
             }
 
         }
     }
 
-    for (int j = 0; j < 4; j++) {
-        if (j == 3) {
-            printf("%d", flow_src_addr[j]);
-        }
-        else {
-            printf("%d.", flow_src_addr[j]);
-        }
-    }
-    printf(" -> ");
-    for (int j = 0; j < 4; j++) {
-        if (j == 3) {
-            printf("%d", flow_dst_addr[j]);
-        }
-        else {
-            printf("%d.", flow_dst_addr[j]);
-        }
-    }
-    printf(" : ");
+    print_from_to_row(flow_src_addr, flow_dst_addr);
     printf("%u:%u - %u:%u\n", start_timestamp_sec, start_timestamp_usec, end_timestamp_sec, end_timestamp_usec);
     return 0;
 }
