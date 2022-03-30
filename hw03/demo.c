@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include "capture.h"
 
-//#define TEST_FILE "test.pcap"
-#define TEST_FILE "mytest.pcap"
+#define TEST_FILE "test.pcap"
+//#define TEST_FILE "mytest.pcap"
 
 void demo1()
 {
