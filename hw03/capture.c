@@ -5,17 +5,24 @@
 
 int load_capture(struct capture_t *capture, const char *filename)
 {
-    // initialize the pcap context - open the file
     struct pcap_context context[1];
     if (init_context(context, filename) != PCAP_SUCCESS) {
         destroy_context(context);
         return -1;
     }
 
-    // initialize pcap_header part of main struct
     capture->number_of_packets = 0;
     capture->pcap_header = malloc(sizeof(struct pcap_header_t));
+    capture->packets = malloc(sizeof(struct packet_t));
+
+    if (capture->pcap_header == NULL || capture->packets == NULL) {
+        destroy_capture(capture);
+        destroy_context(context);
+        return -1;
+    }
+
     memset(capture->pcap_header, 0, sizeof(struct pcap_header_t));
+    memset(capture->packets, 0, sizeof(struct packet_t));
 
     if (load_header(context, capture->pcap_header) != PCAP_SUCCESS) {
         destroy_capture(capture);
@@ -23,20 +30,15 @@ int load_capture(struct capture_t *capture, const char *filename)
         return -1;
     }
 
-    // start loading packets into struct
     int i = 0;
-    int load_pkt_return_val = 0;
-    capture->packets = malloc(sizeof(struct packet_t));
-    memset(capture->packets, 0, sizeof(struct packet_t));
+    int load_pkt_return_val;
 
-    // find out a way to load all packets (when does loading stop?)
     while (true) {
         load_pkt_return_val = load_packet(context, &capture->packets[i]);
 
         if (load_pkt_return_val == PCAP_FILE_END) {
             break;
         }
-        // if loading fails before file end, free memory
         if (load_pkt_return_val != 0) {
             destroy_capture(capture);
             destroy_context(context);
@@ -44,11 +46,19 @@ int load_capture(struct capture_t *capture, const char *filename)
         }
         capture->number_of_packets++;
         i++;
+
+        // TODO: what if realloc fails? use aux variable?
         capture->packets = realloc(capture->packets, (i + 1) * sizeof(struct packet_t));
+
+        if (capture->packets == NULL) {
+            destroy_capture(capture);
+            destroy_context(context);
+            return -1;
+        }
+
         memset(capture->packets + i, 0, sizeof(struct packet_t));
     }
 
-    // destroy loaded pcap context at the end
     destroy_context(context);
     return 0;
 }
@@ -66,6 +76,7 @@ const struct pcap_header_t *get_header(const struct capture_t *const capture)
 {
     return capture->pcap_header;
 }
+
 struct packet_t *get_packet(
         const struct capture_t *const capture,
         size_t index)
@@ -88,32 +99,47 @@ size_t data_transfered(const struct capture_t *const capture)
     return transfer;
 }
 
+int set_filtered_capture(
+        const struct capture_t *const original,
+        struct capture_t *filtered)
+{
+    filtered->number_of_packets = 0;
+    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
+    filtered->packets = malloc(sizeof(struct packet_t));
+
+    if (filtered->pcap_header == NULL || filtered->packets == NULL) {
+        destroy_capture(filtered);
+        return -1;
+    }
+
+    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
+    memset(filtered->packets, 0, sizeof(struct packet_t));
+
+    return 0;
+}
+
+
 int filter_protocol(
         const struct capture_t *const original,
         struct capture_t *filtered,
         uint8_t protocol)
 {
-    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
-    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
 
-    // copy pcap header (is there a better way?)
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
-
-    filtered->packets = malloc(sizeof(struct packet_t));
-    memset(filtered->packets, 0, sizeof(struct packet_t));
-
-    int j = 0;
-    filtered->number_of_packets = 0;
+    int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (original->packets[i].ip_header->protocol == protocol) {
-            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
-            j++;
+            copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
     return 0;
@@ -124,33 +150,26 @@ int filter_larger_than(
         struct capture_t *filtered,
         uint32_t size)
 {
-    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
-    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
 
-    // copy pcap header (is there a better way?)
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
-
-    filtered->packets = malloc(sizeof(struct packet_t));
-    memset(filtered->packets, 0, sizeof(struct packet_t));
-
-    int j = 0;
-    filtered->number_of_packets = 0;
+    int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (original->packets[i].packet_header->orig_len >= size) {
-            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
-            j++;
+            copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
     return 0;
 }
 
-// can I use a helper function?
 bool is_same_ip(uint8_t original[4], uint8_t copy[4])
 {
     for (int ip_part = 0; ip_part < 4; ip_part++) {
@@ -167,29 +186,23 @@ int filter_from_to(
         uint8_t source_ip[4],
         uint8_t destination_ip[4])
 {
-    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
-    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
 
-    // copy pcap header (is there a better way?)
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
-
-    filtered->packets = malloc(sizeof(struct packet_t));
-    memset(filtered->packets, 0, sizeof(struct packet_t));
-
-    int j = 0;
-    filtered->number_of_packets = 0;
+    int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (is_same_ip(original->packets[i].ip_header->src_addr, source_ip)
             && is_same_ip(original->packets[i].ip_header->dst_addr, destination_ip)) {
 
-            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
-            j++;
+            copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
     return 0;
@@ -231,27 +244,21 @@ int filter_from_mask(
     uint8_t mask[4] = { 0 };
     create_mask(mask_length, mask);
 
-    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
-    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
 
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
-
-    filtered->packets = malloc(sizeof(struct packet_t));
-    memset(filtered->packets, 0, sizeof(struct packet_t));
-
-    int j = 0;
-    filtered->number_of_packets = 0;
-
+    int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->src_addr)) {
-            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
-            j++;
+            copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
 
@@ -267,27 +274,21 @@ int filter_to_mask(
     uint8_t mask[4] = { 0 };
     create_mask(mask_length, mask);
 
-    filtered->pcap_header = malloc(sizeof(struct pcap_header_t));
-    memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
 
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
-
-    filtered->packets = malloc(sizeof(struct packet_t));
-    memset(filtered->packets, 0, sizeof(struct packet_t));
-
-    int j = 0;
-    filtered->number_of_packets = 0;
-
+    int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->dst_addr)) {
-            if (copy_packet(&original->packets[i], &filtered->packets[j]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
-            j++;
+            copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (j + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + j, 0, sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
 
@@ -355,10 +356,10 @@ int print_longest_flow(const struct capture_t *const capture)
     uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
     uint32_t duration_sec = 0;
     uint32_t duration_usec = 0;
-    uint32_t start_timestamp_sec = 0;
-    uint32_t start_timestamp_usec = 0;
-    uint32_t end_timestamp_sec = 0;
-    uint32_t end_timestamp_usec = 0;
+    uint32_t start_sec = 0;
+    uint32_t start_usec = 0;
+    uint32_t end_sec = 0;
+    uint32_t end_usec = 0;
 
     for (size_t i = 0; i < capture->number_of_packets; i++) {
         uint8_t *src = capture->packets[i].ip_header->src_addr;
@@ -379,19 +380,20 @@ int print_longest_flow(const struct capture_t *const capture)
         }
 
         struct capture_t *filtered = malloc(sizeof(struct capture_t));
+
+        if (filtered == NULL) {
+            return -1;
+        }
+
         filter_from_to(capture, filtered, src, dst);
 
         // helper function -> count_duration
-        uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
-        uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
-        uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
-        uint32_t end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
-
-        uint32_t current_duration_sec = end_sec - start_sec;
-        uint32_t current_duration_usec = end_usec - start_usec;
-
-        destroy_capture(filtered);
-        free(filtered);
+        uint32_t current_duration_sec =
+                filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec
+                - filtered->packets[0].packet_header->ts_sec;
+        uint32_t current_duration_usec =
+                filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec
+                - filtered->packets[0].packet_header->ts_usec;
 
         // helper function -> compare durations
         if (current_duration_sec == duration_sec) {
@@ -404,18 +406,21 @@ int print_longest_flow(const struct capture_t *const capture)
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
-                start_timestamp_sec = start_sec;
-                start_timestamp_usec = start_usec;
-                end_timestamp_sec = end_sec;
-                end_timestamp_usec = end_usec;
+                start_sec = filtered->packets[0].packet_header->ts_sec;
+                start_usec = filtered->packets[0].packet_header->ts_usec;
+                end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
+                end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
                 duration_sec = current_duration_sec;
                 duration_usec = current_duration_usec;
             }
 
         }
+        destroy_capture(filtered);
+        free(filtered);
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
-    printf("%u:%u - %u:%u\n", start_timestamp_sec, start_timestamp_usec, end_timestamp_sec, end_timestamp_usec);
+    printf("%u:%u - %u:%u\n", start_sec, start_usec,
+           end_sec, end_usec);
     return 0;
 }

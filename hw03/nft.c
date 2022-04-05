@@ -34,9 +34,11 @@ int load_arguments(char **argv, struct arguments *args)
     }
 
     int ret_val_from = sscanf(argv[2], "%hhu.%hhu.%hhu.%hhu/%hhu",
-                              &args->src[0], &args->src[1], &args->src[2], &args->src[3], &args->from_bits);
+                              &args->src[0], &args->src[1], &args->src[2],
+                              &args->src[3], &args->from_bits);
     int ret_val_to = sscanf(argv[3], "%hhu.%hhu.%hhu.%hhu/%hhu",
-                            &args->dst[0], &args->dst[1], &args->dst[2], &args->dst[3], &args->to_bits);
+                            &args->dst[0], &args->dst[1], &args->dst[2],
+                            &args->dst[3], &args->to_bits);
 
     if (ret_val_from != 5 || ret_val_to != 5) {
         fprintf(stderr, "Wrong from/to address!\n");
@@ -66,12 +68,21 @@ int main(int argc, char *argv[])
     }
 
     struct capture_t *capture = malloc(sizeof(struct capture_t));
-    load_capture(capture, args.filename);
-
     struct capture_t *filtered_from = malloc(sizeof(struct capture_t));
-    filter_from_mask(capture, filtered_from, args.src, args.from_bits);
-
     struct capture_t *filtered_to = malloc(sizeof(struct capture_t));
+
+    if (capture == NULL || filtered_from == NULL || filtered_to == NULL) {
+        destroy_capture(capture);
+        destroy_capture(filtered_from);
+        destroy_capture(filtered_to);
+        free(capture);
+        free(filtered_from);
+        free(filtered_to);
+        return EXIT_FAILURE;
+    }
+
+    load_capture(capture, args.filename);
+    filter_from_mask(capture, filtered_from, args.src, args.from_bits);
     filter_to_mask(filtered_from, filtered_to, args.dst, args.to_bits);
 
     if (args.flowstats) {
@@ -82,10 +93,10 @@ int main(int argc, char *argv[])
     }
 
     destroy_capture(capture);
-    free(capture);
     destroy_capture(filtered_from);
-    free(filtered_from);
     destroy_capture(filtered_to);
+    free(capture);
+    free(filtered_from);
     free(filtered_to);
     return EXIT_SUCCESS;
 }
