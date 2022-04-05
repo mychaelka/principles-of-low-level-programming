@@ -99,6 +99,7 @@ size_t data_transfered(const struct capture_t *const capture)
     return transfer;
 }
 
+// HELP FUNCTIONS
 int set_filtered_capture(
         const struct capture_t *const original,
         struct capture_t *filtered)
@@ -113,105 +114,29 @@ int set_filtered_capture(
     }
 
     memset(filtered->pcap_header, 0, sizeof(struct pcap_header_t));
-    memcpy(filtered->pcap_header, original->pcap_header, sizeof(struct pcap_header_t));
+    memcpy(filtered->pcap_header, original->pcap_header,
+           sizeof(struct pcap_header_t));
     memset(filtered->packets, 0, sizeof(struct packet_t));
 
     return 0;
 }
 
-
-int filter_protocol(
-        const struct capture_t *const original,
-        struct capture_t *filtered,
-        uint8_t protocol)
-{
-    if (set_filtered_capture(original, filtered) != 0) {
-        return -1;
-    }
-
-    int copied_idx = 0;
-    for (size_t i = 0; i < original->number_of_packets; i++) {
-        if (original->packets[i].ip_header->protocol == protocol) {
-            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
-                destroy_capture(filtered);
-                return -1;
-            }
-            copied_idx++;
-            filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
-        }
-    }
-    return 0;
-}
-
-int filter_larger_than(
-        const struct capture_t *const original,
-        struct capture_t *filtered,
-        uint32_t size)
-{
-    if (set_filtered_capture(original, filtered) != 0) {
-        return -1;
-    }
-
-    int copied_idx = 0;
-    for (size_t i = 0; i < original->number_of_packets; i++) {
-        if (original->packets[i].packet_header->orig_len >= size) {
-            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
-                destroy_capture(filtered);
-                return -1;
-            }
-            copied_idx++;
-            filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
-        }
-    }
-    return 0;
-}
-
-bool is_same_ip(uint8_t original[4], uint8_t copy[4])
+bool satisfies_mask(uint8_t const network_prefix[4],
+                    const uint8_t mask[4],
+                    const uint8_t ip[4])
 {
     for (int ip_part = 0; ip_part < 4; ip_part++) {
-        if (original[ip_part] != copy[ip_part]) {
+        if ((ip[ip_part] & mask[ip_part]) != (network_prefix[ip_part] & mask[ip_part])) {
             return false;
         }
     }
     return true;
 }
 
-int filter_from_to(
-        const struct capture_t *const original,
-        struct capture_t *filtered,
-        uint8_t source_ip[4],
-        uint8_t destination_ip[4])
-{
-    if (set_filtered_capture(original, filtered) != 0) {
-        return -1;
-    }
-
-    int copied_idx = 0;
-    for (size_t i = 0; i < original->number_of_packets; i++) {
-        if (is_same_ip(original->packets[i].ip_header->src_addr, source_ip)
-            && is_same_ip(original->packets[i].ip_header->dst_addr, destination_ip)) {
-
-            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
-                destroy_capture(filtered);
-                return -1;
-            }
-            copied_idx++;
-            filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
-            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
-        }
-    }
-    return 0;
-}
-
-bool satisfies_mask(uint8_t network_prefix[4], uint8_t mask[4], uint8_t ip[4])
+bool is_same_ip(const uint8_t original[4], const uint8_t copy[4])
 {
     for (int ip_part = 0; ip_part < 4; ip_part++) {
-        if ((ip[ip_part] & mask[ip_part]) != (network_prefix[ip_part] & mask[ip_part])) {
+        if (original[ip_part] != copy[ip_part]) {
             return false;
         }
     }
@@ -235,6 +160,106 @@ void create_mask(uint8_t length, uint8_t result[4])
     }
 }
 
+void print_ip(uint8_t *ip)
+{
+    for (int j = 0; j < 3; j++) {
+        printf("%d.", ip[j]);
+    }
+    printf("%d", ip[3]);
+}
+
+void print_from_to_row(uint8_t *src, uint8_t *dst)
+{
+    print_ip(src);
+    printf(" -> ");
+    print_ip(dst);
+    printf(" : ");
+}
+
+int filter_protocol(
+        const struct capture_t *const original,
+        struct capture_t *filtered,
+        uint8_t protocol)
+{
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
+
+    int copied_idx = 0;
+    for (size_t i = 0; i < original->number_of_packets; i++) {
+        if (original->packets[i].ip_header->protocol == protocol) {
+            if (copy_packet(&original->packets[i],
+                            &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            copied_idx++;
+            filtered->number_of_packets++;
+            filtered->packets = realloc(filtered->packets,
+                                        (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
+        }
+    }
+    return 0;
+}
+
+int filter_larger_than(
+        const struct capture_t *const original,
+        struct capture_t *filtered,
+        uint32_t size)
+{
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
+
+    int copied_idx = 0;
+    for (size_t i = 0; i < original->number_of_packets; i++) {
+        if (original->packets[i].packet_header->orig_len >= size) {
+            if (copy_packet(&original->packets[i],
+                            &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            copied_idx++;
+            filtered->number_of_packets++;
+            filtered->packets = realloc(filtered->packets,
+                                        (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
+        }
+    }
+    return 0;
+}
+
+int filter_from_to(
+        const struct capture_t *const original,
+        struct capture_t *filtered,
+        uint8_t source_ip[4],
+        uint8_t destination_ip[4])
+{
+    if (set_filtered_capture(original, filtered) != 0) {
+        return -1;
+    }
+
+    int copied_idx = 0;
+    for (size_t i = 0; i < original->number_of_packets; i++) {
+        if (is_same_ip(original->packets[i].ip_header->src_addr, source_ip)
+            && is_same_ip(original->packets[i].ip_header->dst_addr, destination_ip)) {
+
+            if (copy_packet(&original->packets[i],
+                            &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            copied_idx++;
+            filtered->number_of_packets++;
+            filtered->packets = realloc(filtered->packets,
+                                        (copied_idx + 1) * sizeof(struct packet_t));
+            memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
+        }
+    }
+    return 0;
+}
+
 int filter_from_mask(
         const struct capture_t *const original,
         struct capture_t *filtered,
@@ -250,14 +275,17 @@ int filter_from_mask(
 
     int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
-        if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->src_addr)) {
-            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
+        if (satisfies_mask(network_prefix, mask,
+                           original->packets[i].ip_header->src_addr)) {
+            if (copy_packet(&original->packets[i],
+                            &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets,
+                                        (copied_idx + 1) * sizeof(struct packet_t));
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
@@ -281,40 +309,20 @@ int filter_to_mask(
     int copied_idx = 0;
     for (size_t i = 0; i < original->number_of_packets; i++) {
         if (satisfies_mask(network_prefix, mask, original->packets[i].ip_header->dst_addr)) {
-            if (copy_packet(&original->packets[i], &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
+            if (copy_packet(&original->packets[i],
+                            &filtered->packets[copied_idx]) != PCAP_SUCCESS) {
                 destroy_capture(filtered);
                 return -1;
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets, (copied_idx + 1) * sizeof(struct packet_t));
+            filtered->packets = realloc(filtered->packets,
+                                        (copied_idx + 1) * sizeof(struct packet_t));
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
 
     return 0;
-}
-
-void print_from_to_row(uint8_t *src, uint8_t *dst)
-{
-    for (int j = 0; j < 4; j++) {
-        if (j == 3) {
-            printf("%d", src[j]);
-        }
-        else {
-            printf("%d.", src[j]);
-        }
-    }
-    printf(" -> ");
-    for (int j = 0; j < 4; j++) {
-        if (j == 3) {
-            printf("%d", dst[j]);
-        }
-        else {
-            printf("%d.", dst[j]);
-        }
-    }
-    printf(" : ");
 }
 
 int print_flow_stats(const struct capture_t *const capture)
@@ -356,10 +364,11 @@ int print_longest_flow(const struct capture_t *const capture)
     uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
     uint32_t duration_sec = 0;
     uint32_t duration_usec = 0;
-    uint32_t start_sec = 0;
-    uint32_t start_usec = 0;
-    uint32_t end_sec = 0;
-    uint32_t end_usec = 0;
+    uint32_t start_timestamp_sec = 0;
+    uint32_t start_timestamp_usec = 0;
+    uint32_t end_timestamp_sec = 0;
+    uint32_t end_timestamp_usec = 0;
+
 
     for (size_t i = 0; i < capture->number_of_packets; i++) {
         uint8_t *src = capture->packets[i].ip_header->src_addr;
@@ -388,12 +397,16 @@ int print_longest_flow(const struct capture_t *const capture)
         filter_from_to(capture, filtered, src, dst);
 
         // helper function -> count_duration
-        uint32_t current_duration_sec =
-                filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec
-                - filtered->packets[0].packet_header->ts_sec;
-        uint32_t current_duration_usec =
-                filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec
-                - filtered->packets[0].packet_header->ts_usec;
+        uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
+        uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
+        uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
+        uint32_t end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
+
+        uint32_t current_duration_sec = end_sec - start_sec;
+        uint32_t current_duration_usec = end_usec - start_usec;
+
+        destroy_capture(filtered);
+        free(filtered);
 
         // helper function -> compare durations
         if (current_duration_sec == duration_sec) {
@@ -406,21 +419,20 @@ int print_longest_flow(const struct capture_t *const capture)
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
-                start_sec = filtered->packets[0].packet_header->ts_sec;
-                start_usec = filtered->packets[0].packet_header->ts_usec;
-                end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
-                end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
+                start_timestamp_sec = start_sec;
+                start_timestamp_usec = start_usec;
+                end_timestamp_sec = end_sec;
+                end_timestamp_usec = end_usec;
                 duration_sec = current_duration_sec;
                 duration_usec = current_duration_usec;
+
             }
 
         }
-        destroy_capture(filtered);
-        free(filtered);
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
-    printf("%u:%u - %u:%u\n", start_sec, start_usec,
-           end_sec, end_usec);
+    printf("%u:%u - %u:%u\n", start_timestamp_sec,
+           start_timestamp_usec, end_timestamp_sec, end_timestamp_usec);
     return 0;
 }
