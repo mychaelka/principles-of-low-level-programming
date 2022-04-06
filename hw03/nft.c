@@ -60,8 +60,9 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    struct arguments args = {" ", {0U, 0U, 0U, 0U},
-            {0U, 0U, 0U, 0U}, 0, 0, false};
+    struct arguments args = { " ", { 0U, 0U, 0U, 0U },
+            { 0U, 0U, 0U, 0U },
+            0, 0, false };
 
     if (load_arguments(argv, &args) != 0) {
         return EXIT_FAILURE;
@@ -85,13 +86,14 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Capture loading failed!\n");
         return EXIT_FAILURE;
     }
-    filter_from_mask(capture, filtered_from, args.src, args.from_bits);
-    filter_to_mask(filtered_from, filtered_to, args.dst, args.to_bits);
+    filter_from_mask(capture, filtered_from,
+                     args.src, args.from_bits);
+    filter_to_mask(filtered_from, filtered_to,
+                   args.dst, args.to_bits);
 
     if (args.flowstats) {
         print_flow_stats(filtered_to);
-    }
-    else {
+    } else {
         print_longest_flow(filtered_to);
     }
 
