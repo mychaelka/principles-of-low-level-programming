@@ -176,6 +176,18 @@ void print_from_to_row(uint8_t *src, uint8_t *dst)
     printf(" : ");
 }
 
+bool pair_already_analysed(const struct capture_t *const capture,
+                           uint8_t *src, uint8_t *dst, size_t idx)
+{
+    for (size_t j = 0; j < idx; j++) {
+        if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
+            && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 int filter_protocol(
         const struct capture_t *const original,
@@ -359,19 +371,6 @@ int print_flow_stats(const struct capture_t *const capture)
     return 0;
 }
 
-bool pair_already_analysed(const struct capture_t *const capture,
-                      uint8_t *src, uint8_t *dst, size_t idx)
-{
-    for (size_t j = 0; j < idx; j++) {
-        if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
-            && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 int print_longest_flow(const struct capture_t *const capture)
 {
     uint8_t flow_src_addr[4] = {0, 0, 0, 0};
@@ -397,7 +396,6 @@ int print_longest_flow(const struct capture_t *const capture)
 
         filter_from_to(capture, filtered, src, dst);
 
-        // calculate current durations in sec and usec
         uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
         uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
         uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
@@ -419,7 +417,6 @@ int print_longest_flow(const struct capture_t *const capture)
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
             }
-
             start_timestamps[0] = start_sec;
             start_timestamps[1] = start_usec;
             end_timestamps[0] = end_sec;
