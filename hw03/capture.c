@@ -46,8 +46,14 @@ int load_capture(struct capture_t *capture, const char *filename)
         capture->number_of_packets++;
         i++;
 
-        // TODO: what if realloc fails? use aux variable?
-        capture->packets = realloc(capture->packets, (i + 1) * sizeof(struct packet_t));
+        struct packet_t *packets_tmp = realloc(capture->packets, (i + 1) * sizeof(struct packet_t));
+        if (packets_tmp == NULL) {
+            destroy_capture(capture);
+            destroy_context(context);
+            return -1;
+        }
+        capture->packets = packets_tmp;
+
 
         if (capture->packets == NULL) {
             destroy_capture(capture);
@@ -207,8 +213,13 @@ int filter_protocol(
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets,
-                                        (copied_idx + 1) * sizeof(struct packet_t));
+            struct packet_t *packets_tmp = realloc(filtered->packets,
+                                                   (copied_idx + 1) * sizeof(struct packet_t));
+            if (packets_tmp == NULL) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            filtered->packets = packets_tmp;
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
@@ -234,8 +245,13 @@ int filter_larger_than(
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets,
-                                        (copied_idx + 1) * sizeof(struct packet_t));
+            struct packet_t *packets_tmp = realloc(filtered->packets,
+                                                   (copied_idx + 1) * sizeof(struct packet_t));
+            if (packets_tmp == NULL) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            filtered->packets = packets_tmp;
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
@@ -264,8 +280,13 @@ int filter_from_to(
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets,
-                                        (copied_idx + 1) * sizeof(struct packet_t));
+            struct packet_t *packets_tmp = realloc(filtered->packets,
+                                                   (copied_idx + 1) * sizeof(struct packet_t));
+            if (packets_tmp == NULL) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            filtered->packets = packets_tmp;
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
@@ -296,8 +317,13 @@ int filter_from_mask(
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets,
-                                        (copied_idx + 1) * sizeof(struct packet_t));
+            struct packet_t *packets_tmp = realloc(filtered->packets,
+                                                   (copied_idx + 1) * sizeof(struct packet_t));
+            if (packets_tmp == NULL) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            filtered->packets = packets_tmp;
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
@@ -328,8 +354,13 @@ int filter_to_mask(
             }
             copied_idx++;
             filtered->number_of_packets++;
-            filtered->packets = realloc(filtered->packets,
-                                        (copied_idx + 1) * sizeof(struct packet_t));
+            struct packet_t *packets_tmp = realloc(filtered->packets,
+                                                   (copied_idx + 1) * sizeof(struct packet_t));
+            if (packets_tmp == NULL) {
+                destroy_capture(filtered);
+                return -1;
+            }
+            filtered->packets = packets_tmp;
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
