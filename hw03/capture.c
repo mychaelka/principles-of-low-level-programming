@@ -148,8 +148,7 @@ void create_mask(uint8_t length, uint8_t result[4])
     uint32_t mask = 1;
     if (length == 32) {
         mask = UINT32_MAX;
-    }
-    else {
+    } else {
         mask <<= length;
         mask -= 1;
     }
@@ -371,10 +370,37 @@ int print_flow_stats(const struct capture_t *const capture)
     return 0;
 }
 
+void set_new_timestamps(uint32_t start[2], uint32_t end[2],
+                        const struct capture_t *const capture)
+{
+    uint32_t start_sec = capture->packets[0].packet_header->ts_sec;
+    uint32_t start_usec = capture->packets[0].packet_header->ts_usec;
+    uint32_t end_sec = capture->packets[capture->number_of_packets - 1].packet_header->ts_sec;
+    uint32_t end_usec = capture->packets[capture->number_of_packets - 1].packet_header->ts_usec;
+
+    start[0] = start_sec;
+    start[1] = start_usec;
+    end[0] = end_sec;
+    end[1] = end_usec;
+}
+
+uint32_t get_duration_sec(const struct capture_t *const capture)
+{
+    return capture->packets[capture->number_of_packets - 1].packet_header->ts_sec \
+    - capture->packets[0].packet_header->ts_sec;
+}
+
+uint32_t get_duration_usec(const struct capture_t *const capture)
+{
+    return capture->packets[capture->number_of_packets - 1].packet_header->ts_usec \
+    - capture->packets[0].packet_header->ts_usec;
+}
+
 int print_longest_flow(const struct capture_t *const capture)
 {
     uint8_t flow_src_addr[4] = {0, 0, 0, 0};
-    uint8_t flow_dst_addr[4] = {0, 0, 0, 0};\
+    uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
+    bool capture_found = false;
 
     // position 0. -> timestamp in sec, position 1. -> timestamp in usec
     uint32_t longest_durations[2] = {0, 0};
@@ -396,34 +422,34 @@ int print_longest_flow(const struct capture_t *const capture)
 
         filter_from_to(capture, filtered, src, dst);
 
-        uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
-        uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
-        uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
-        uint32_t end_usec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_usec;
-
-        uint32_t current_duration_sec = end_sec - start_sec;
-        uint32_t current_duration_usec = end_usec - start_usec;
-
-        destroy_capture(filtered);
+        uint32_t current_duration_sec = get_duration_sec(filtered);
+        uint32_t current_duration_usec = get_duration_usec(filtered);
 
         if (current_duration_sec == longest_durations[0]) {
             if (current_duration_usec <= longest_durations[1]) {
+                destroy_capture(filtered);
                 continue;
             }
         }
 
         if (current_duration_sec >= longest_durations[0]) {
+            capture_found = true;
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
             }
-            start_timestamps[0] = start_sec;
-            start_timestamps[1] = start_usec;
-            end_timestamps[0] = end_sec;
-            end_timestamps[1] = end_usec;
+            set_new_timestamps(start_timestamps, end_timestamps, filtered);
             longest_durations[0] = current_duration_sec;
             longest_durations[1] = current_duration_usec;
         }
+
+        destroy_capture(filtered);
+    }
+
+    if (!capture_found) {
+        fprintf(stderr, "No flow found.\n");
+        free(filtered);
+        return -1;
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
