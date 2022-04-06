@@ -72,16 +72,19 @@ int main(int argc, char *argv[])
     struct capture_t *filtered_to = malloc(sizeof(struct capture_t));
 
     if (capture == NULL || filtered_from == NULL || filtered_to == NULL) {
-        destroy_capture(capture);
-        destroy_capture(filtered_from);
-        destroy_capture(filtered_to);
         free(capture);
         free(filtered_from);
         free(filtered_to);
         return EXIT_FAILURE;
     }
 
-    load_capture(capture, args.filename);
+    if (load_capture(capture, args.filename) != 0) {
+        free(capture);
+        free(filtered_from);
+        free(filtered_to);
+        fprintf(stderr, "Capture loading failed!\n");
+        return EXIT_FAILURE;
+    }
     filter_from_mask(capture, filtered_from, args.src, args.from_bits);
     filter_to_mask(filtered_from, filtered_to, args.dst, args.to_bits);
 

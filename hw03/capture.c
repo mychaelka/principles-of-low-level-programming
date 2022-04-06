@@ -7,7 +7,6 @@ int load_capture(struct capture_t *capture, const char *filename)
 {
     struct pcap_context context[1];
     if (init_context(context, filename) != PCAP_SUCCESS) {
-        destroy_context(context);
         return -1;
     }
 
@@ -109,7 +108,8 @@ int set_filtered_capture(
     filtered->packets = malloc(sizeof(struct packet_t));
 
     if (filtered->pcap_header == NULL || filtered->packets == NULL) {
-        destroy_capture(filtered);
+        free(filtered->pcap_header);
+        free(filtered->packets);
         return -1;
     }
 
@@ -175,6 +175,7 @@ void print_from_to_row(uint8_t *src, uint8_t *dst)
     print_ip(dst);
     printf(" : ");
 }
+
 
 int filter_protocol(
         const struct capture_t *const original,
@@ -358,45 +359,45 @@ int print_flow_stats(const struct capture_t *const capture)
     return 0;
 }
 
+bool pair_already_analysed(const struct capture_t *const capture,
+                      uint8_t *src, uint8_t *dst, size_t idx)
+{
+    for (size_t j = 0; j < idx; j++) {
+        if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
+            && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 int print_longest_flow(const struct capture_t *const capture)
 {
     uint8_t flow_src_addr[4] = {0, 0, 0, 0};
-    uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
-    uint32_t duration_sec = 0;
-    uint32_t duration_usec = 0;
-    uint32_t start_timestamp_sec = 0;
-    uint32_t start_timestamp_usec = 0;
-    uint32_t end_timestamp_sec = 0;
-    uint32_t end_timestamp_usec = 0;
+    uint8_t flow_dst_addr[4] = {0, 0, 0, 0};\
 
+    // position 0. -> timestamp in sec, position 1. -> timestamp in usec
+    uint32_t longest_durations[2] = {0, 0};
+    uint32_t start_timestamps[2] = {0, 0};
+    uint32_t end_timestamps[2] = {0, 0};
+
+    struct capture_t *filtered = malloc(sizeof(struct capture_t));
+    if (filtered == NULL) {
+        return -1;
+    }
 
     for (size_t i = 0; i < capture->number_of_packets; i++) {
         uint8_t *src = capture->packets[i].ip_header->src_addr;
         uint8_t *dst = capture->packets[i].ip_header->dst_addr;
 
-        // src - dest pair was already counted
-        bool counted = false;
-        for (size_t j = 0; j < i; j++) {
-            if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
-                && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
-                counted = true;
-                break;
-            }
-        }
-
-        if (counted) {
+        if (pair_already_analysed(capture, src, dst, i)) {
             continue;
-        }
-
-        struct capture_t *filtered = malloc(sizeof(struct capture_t));
-
-        if (filtered == NULL) {
-            return -1;
         }
 
         filter_from_to(capture, filtered, src, dst);
 
-        // helper function -> count_duration
+        // calculate current durations in sec and usec
         uint32_t start_sec = filtered->packets[0].packet_header->ts_sec;
         uint32_t start_usec = filtered->packets[0].packet_header->ts_usec;
         uint32_t end_sec = filtered->packets[filtered->number_of_packets - 1].packet_header->ts_sec;
@@ -406,33 +407,32 @@ int print_longest_flow(const struct capture_t *const capture)
         uint32_t current_duration_usec = end_usec - start_usec;
 
         destroy_capture(filtered);
-        free(filtered);
 
-        // helper function -> compare durations
-        if (current_duration_sec == duration_sec) {
-            if (current_duration_usec <= duration_usec) {
+        if (current_duration_sec == longest_durations[0]) {
+            if (current_duration_usec <= longest_durations[1]) {
                 continue;
             }
         }
 
-        if (current_duration_sec >= duration_sec) {
+        if (current_duration_sec >= longest_durations[0]) {
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
-                start_timestamp_sec = start_sec;
-                start_timestamp_usec = start_usec;
-                end_timestamp_sec = end_sec;
-                end_timestamp_usec = end_usec;
-                duration_sec = current_duration_sec;
-                duration_usec = current_duration_usec;
-
             }
 
+            start_timestamps[0] = start_sec;
+            start_timestamps[1] = start_usec;
+            end_timestamps[0] = end_sec;
+            end_timestamps[1] = end_usec;
+            longest_durations[0] = current_duration_sec;
+            longest_durations[1] = current_duration_usec;
         }
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
-    printf("%u:%u - %u:%u\n", start_timestamp_sec,
-           start_timestamp_usec, end_timestamp_sec, end_timestamp_usec);
+    printf("%u:%u - %u:%u\n", start_timestamps[0],
+           start_timestamps[1], end_timestamps[0], end_timestamps[1]);
+
+    free(filtered);
     return 0;
 }
