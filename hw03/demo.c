@@ -159,10 +159,59 @@ void demo4()
     free(capture);
 }
 
+void create_mask1(uint8_t length, uint8_t result[4])
+{
+    uint8_t mask_part;
+    if (length == 32) {
+        mask_part = UINT8_MAX;
+        for (int i = 0; i < 4; i++) {
+            result[i] = UINT8_MAX;
+        }
+        return;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        if (length == 0) {
+            return;
+        }
+        if (length == 1) {
+            mask_part = 1;
+            mask_part >>= 1;
+            result[i] = mask_part;
+            return;
+        }
+        if (length < 8) {
+            mask_part = 1;
+            mask_part <<= length;
+            mask_part -= 1;
+            mask_part = right_rotate(mask_part, length);
+            result[i] = mask_part;
+            return;
+        }
+        if (length >= 8) {
+            mask_part = UINT8_MAX;
+            result[i] = mask_part;
+            length -= 8;
+            continue;
+        }
+    }
+}
+
+void demo5()
+{
+    uint8_t result[4] = {0, 0, 0, 0};
+    create_mask1(7, result);
+
+    for (int i = 0; i < 4; i++) {
+        printf("result[i]: %d\n", result[i]);
+    }
+}
+
 int main()
 {
-    demo1();
-    demo2();
-    demo3();
-    demo4();
+    //demo1();
+    //demo2();
+    //demo3();
+    //demo4();
+    demo5();
 }
