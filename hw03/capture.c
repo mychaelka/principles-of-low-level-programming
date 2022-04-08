@@ -127,6 +127,37 @@ int set_filtered_capture(
     return 0;
 }
 
+uint8_t right_rotate(uint8_t num, unsigned int bits)
+{
+    bits %= 8;
+    if (bits == 0) {
+        return num;
+    }
+
+    return ((num >> bits) | (num << (8 - bits)));
+}
+
+void create_mask(uint8_t length, uint8_t result[4])
+{
+    uint8_t mask_part = 0;
+    for (int i = 0; i < 4; i++) {
+        if (length == 0) {
+            return;
+        }
+        if (length < 8) {
+            mask_part = 1;
+            mask_part <<= length;
+            mask_part -= 1;
+            mask_part = right_rotate(mask_part, length);
+            result[i] = mask_part;
+            return;
+        }
+        mask_part = UINT8_MAX;
+        result[i] = mask_part;
+        length -= 8;
+    }
+}
+
 bool satisfies_mask(uint8_t const network_prefix[4],
                     const uint8_t mask[4],
                     const uint8_t ip[4])
@@ -147,22 +178,6 @@ bool is_same_ip(const uint8_t original[4], const uint8_t copy[4])
         }
     }
     return true;
-}
-
-void create_mask(uint8_t length, uint8_t result[4])
-{
-    uint32_t mask = 1;
-    if (length == 32) {
-        mask = UINT32_MAX;
-    } else {
-        mask <<= length;
-        mask -= 1;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        result[i] = (mask & 255);
-        mask >>= 8;
-    }
 }
 
 void print_ip(uint8_t *ip)
@@ -415,16 +430,16 @@ void set_new_timestamps(uint32_t start[2], uint32_t end[2],
     end[1] = end_usec;
 }
 
-uint32_t get_duration_sec(const struct capture_t *const capture)
+int32_t get_duration_sec(const struct capture_t *const capture)
 {
-    return capture->packets[capture->number_of_packets - 1].packet_header->ts_sec \
-    - capture->packets[0].packet_header->ts_sec;
+    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_sec \
+    - (int32_t) capture->packets[0].packet_header->ts_sec;
 }
 
-uint32_t get_duration_usec(const struct capture_t *const capture)
+int32_t get_duration_usec(const struct capture_t *const capture)
 {
-    return capture->packets[capture->number_of_packets - 1].packet_header->ts_usec \
-    - capture->packets[0].packet_header->ts_usec;
+    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_usec \
+    - (int32_t) capture->packets[0].packet_header->ts_usec;
 }
 
 int print_longest_flow(const struct capture_t *const capture)
@@ -434,7 +449,7 @@ int print_longest_flow(const struct capture_t *const capture)
     bool capture_found = false;
 
     // position 0. -> timestamp in sec, position 1. -> timestamp in usec
-    uint32_t longest_durations[2] = {0, 0};
+    int32_t longest_durations[2] = {0, 0};
     uint32_t start_timestamps[2] = {0, 0};
     uint32_t end_timestamps[2] = {0, 0};
 
@@ -453,8 +468,8 @@ int print_longest_flow(const struct capture_t *const capture)
 
         filter_from_to(capture, filtered, src, dst);
 
-        uint32_t current_duration_sec = get_duration_sec(filtered);
-        uint32_t current_duration_usec = get_duration_usec(filtered);
+        int32_t current_duration_sec = get_duration_sec(filtered);
+        int32_t current_duration_usec = get_duration_usec(filtered);
 
         if (current_duration_sec == longest_durations[0]) {
             if (current_duration_usec <= longest_durations[1]) {
