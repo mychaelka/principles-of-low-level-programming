@@ -469,7 +469,9 @@ int print_longest_flow(const struct capture_t *const capture)
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
             }
-            set_new_timestamps(start_timestamps, end_timestamps, filtered);
+            set_new_timestamps(start_timestamps,
+                               end_timestamps,
+                               filtered);
             longest_durations[0] = current_duration_sec;
             longest_durations[1] = current_duration_usec;
         }
@@ -484,8 +486,11 @@ int print_longest_flow(const struct capture_t *const capture)
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
-    printf("%u:%u - %u:%u\n", start_timestamps[0],
-           start_timestamps[1], end_timestamps[0], end_timestamps[1]);
+    printf("%u:%u - %u:%u\n",
+           start_timestamps[0],
+           start_timestamps[1],
+           end_timestamps[0],
+           end_timestamps[1]);
 
     free(filtered);
     return 0;
