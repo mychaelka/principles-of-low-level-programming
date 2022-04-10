@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "capture.h"
 
 #define TEST_FILE "test.pcap"
@@ -159,52 +160,36 @@ void demo4()
     free(capture);
 }
 
-void create_mask1(uint8_t length, uint8_t result[4])
+void demo_failed_tests()
 {
-    uint8_t mask_part;
-    if (length == 32) {
-        mask_part = UINT8_MAX;
-        for (int i = 0; i < 4; i++) {
-            result[i] = UINT8_MAX;
-        }
-        return;
-    }
+    struct capture_t *capture = malloc(sizeof(struct capture_t));
+    load_capture(capture, TEST_FILE);
 
-    for (int i = 0; i < 4; i++) {
-        if (length == 0) {
-            return;
-        }
-        if (length == 1) {
-            mask_part = 1;
-            mask_part >>= 1;
-            result[i] = mask_part;
-            return;
-        }
-        if (length < 8) {
-            mask_part = 1;
-            mask_part <<= length;
-            mask_part -= 1;
-            mask_part = right_rotate(mask_part, length);
-            result[i] = mask_part;
-            return;
-        }
-        if (length >= 8) {
-            mask_part = UINT8_MAX;
-            result[i] = mask_part;
-            length -= 8;
-            continue;
-        }
-    }
-}
+    //for (size_t i = 0; i < capture->number_of_packets; i++) {
+    //    print_packet_info(&capture->packets[i]);
+    //}
 
-void demo5()
-{
-    uint8_t result[4] = {0, 0, 0, 0};
-    create_mask1(7, result);
+    struct capture_t *filtered = malloc(sizeof(struct capture_t));
+    filter_protocol(capture, filtered, 255);
 
-    for (int i = 0; i < 4; i++) {
-        printf("result[i]: %d\n", result[i]);
-    }
+    uint64_t a = packet_count(filtered);
+    printf("Packet count: %lu\n", a);
+
+    //for (size_t i = 0; i < filtered->number_of_packets; i++) {
+    //    print_packet_info(&filtered->packets[i]);
+    //}
+
+    destroy_capture(capture);
+    capture->number_of_packets = 0;
+    memcpy(capture->pcap_header, filtered->pcap_header, sizeof(struct capture_t));
+    capture->packets = NULL;
+
+    print_longest_flow(capture);
+
+    destroy_capture(filtered);
+    destroy_capture(capture);
+    free(capture);
+    free(filtered);
 }
 
 int main()
@@ -213,5 +198,5 @@ int main()
     //demo2();
     //demo3();
     //demo4();
-    demo5();
+    demo_failed_tests();
 }

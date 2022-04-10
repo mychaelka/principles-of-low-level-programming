@@ -67,3 +67,33 @@ TEST(print_flow_stats)
 
     destroy_capture(capture);
 }
+
+TEST(filter_protocol_basic)
+{
+    struct capture_t capture[1];
+
+    int retval = load_capture(capture, TEST_FILE);
+    ASSERT(retval == 0);
+
+    struct capture_t filtered[1];
+
+    retval = filter_protocol(
+            capture,
+            filtered,
+            0);
+    ASSERT(retval == 0);
+
+    CHECK(capture[0].pcap_header->snaplen == filtered[0].pcap_header->snaplen);
+    CHECK(get_header(capture)->snaplen == get_header(filtered)->snaplen);
+
+    CHECK(packet_count(filtered) == 0);
+    CHECK(data_transfered(filtered) == 0);
+
+
+    // Check lengths of both packets
+    CHECK(get_packet(filtered, 0) == NULL);
+    CHECK(get_packet(filtered, 1) == NULL);
+    // breakpoint me here
+    destroy_capture(capture);
+    destroy_capture(filtered);
+}
