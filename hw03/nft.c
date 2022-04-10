@@ -53,13 +53,16 @@ int load_arguments(char **argv, struct arguments *args)
     return 0;
 }
 
-void destroy_all(struct capture_t *capture,
-                 struct capture_t *filtered_from,
-                 struct capture_t *filtered_to)
+void free_all(struct capture_t *capture,
+              struct capture_t *filtered_from,
+              struct capture_t *filtered_to,
+              bool destroy_too)
 {
-    destroy_capture(capture);
-    destroy_capture(filtered_from);
-    destroy_capture(filtered_to);
+    if (destroy_too) {
+        destroy_capture(capture);
+        destroy_capture(filtered_from);
+        destroy_capture(filtered_to);
+    }
     free(capture);
     free(filtered_from);
     free(filtered_to);
@@ -86,17 +89,13 @@ int main(int argc, char *argv[])
     struct capture_t *filtered_to = malloc(sizeof(struct capture_t));
 
     if (capture == NULL || filtered_from == NULL || filtered_to == NULL) {
-        free(capture);
-        free(filtered_from);
-        free(filtered_to);
+        free_all(capture, filtered_from, filtered_to, false);
         fprintf(stderr, "Memory allocation fail\n");
         return EXIT_FAILURE;
     }
 
     if (load_capture(capture, args.filename) != 0) {
-        free(capture);
-        free(filtered_from);
-        free(filtered_to);
+        free_all(capture, filtered_from, filtered_to, false);
         fprintf(stderr, "Capture loading failed!\n");
         return EXIT_FAILURE;
     }
@@ -109,23 +108,23 @@ int main(int argc, char *argv[])
                           filtered_to,
                           args.dst,
                           args.to_bits) != 0) {
-        destroy_all(capture, filtered_from, filtered_to);
+        free_all(capture, filtered_from, filtered_to, true);
         fprintf(stderr, "Filtering failed.\n");
         return EXIT_FAILURE;
     }
 
     if (args.flowstats) {
         if (print_flow_stats(filtered_to) != 0) {
-            destroy_all(capture, filtered_from, filtered_to);
+            free_all(capture, filtered_from, filtered_to, true);
             return EXIT_FAILURE;
         }
     } else {
         if (print_longest_flow(filtered_to) != 0) {
-            destroy_all(capture, filtered_from, filtered_to);
+            free_all(capture, filtered_from, filtered_to, true);
             return EXIT_FAILURE;
         }
     }
 
-    destroy_all(capture, filtered_from, filtered_to);
+    free_all(capture, filtered_from, filtered_to, true);
     return EXIT_SUCCESS;
 }
