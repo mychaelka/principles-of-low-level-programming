@@ -86,6 +86,10 @@ struct packet_t *get_packet(
         const struct capture_t *const capture,
         size_t index)
 {
+    if (index > capture->number_of_packets - 1
+        || capture-> number_of_packets == 0) {
+        return NULL;
+    }
     return &capture->packets[index];
 }
 
@@ -105,7 +109,15 @@ size_t data_transfered(const struct capture_t *const capture)
 }
 
 // HELP FUNCTIONS
-int set_filtered_capture(
+/**
+ * @brief Initializes capture where filtered packets are to be stored
+ *
+ * @param original original capture
+ * @param filtered capture to be set
+ *
+ * @return 0 in case of success, -1 otherwise
+ */
+int init_filtered_capture(
         const struct capture_t *const original,
         struct capture_t *filtered)
 {
@@ -137,6 +149,15 @@ uint8_t right_rotate(uint8_t num, unsigned int bits)
     return ((num >> bits) | (num << (8 - bits)));
 }
 
+/**
+ * @brief Initializes capture where filtered packets are to be stored
+ *
+ * @param length length of the mask in bits (max 32)
+ * @param result 1D array where resulting mask will be stored,
+ * divided into 4x8 bits
+ *
+ * @return void, modifies result param
+ */
 void create_mask(uint8_t length, uint8_t result[4])
 {
     uint8_t mask_part = 0;
@@ -209,12 +230,43 @@ bool pair_already_analysed(const struct capture_t *const capture,
     return false;
 }
 
+/**
+ * @brief Stores new timestamps from capture to two arrays
+ *
+ * @param start 1D array of start timestamps (sec and usec)
+ * @param end 1D array of end timestamps (sec and usec)
+ * @param capture capture from which the timestamps are drawn
+ *
+ * @return void, modifies start and end params
+ */
+void set_new_timestamps(uint32_t start[2], uint32_t end[2],
+                        const struct capture_t *const capture)
+{
+    start[0] = capture->packets[0].packet_header->ts_sec;
+    start[1] = capture->packets[0].packet_header->ts_usec;
+    end[0] = capture->packets[capture->number_of_packets - 1].packet_header->ts_sec;
+    end[1] = capture->packets[capture->number_of_packets - 1].packet_header->ts_usec;
+}
+
+int32_t get_duration_sec(const struct capture_t *const capture)
+{
+    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_sec \
+    - (int32_t) capture->packets[0].packet_header->ts_sec;
+}
+
+int32_t get_duration_usec(const struct capture_t *const capture)
+{
+    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_usec \
+    - (int32_t) capture->packets[0].packet_header->ts_usec;
+}
+
+// FILTERING
 int filter_protocol(
         const struct capture_t *const original,
         struct capture_t *filtered,
         uint8_t protocol)
 {
-    if (set_filtered_capture(original, filtered) != 0) {
+    if (init_filtered_capture(original, filtered) != 0) {
         return -1;
     }
 
@@ -238,6 +290,7 @@ int filter_protocol(
             memset(filtered->packets + copied_idx, 0, sizeof(struct packet_t));
         }
     }
+
     return 0;
 }
 
@@ -246,7 +299,7 @@ int filter_larger_than(
         struct capture_t *filtered,
         uint32_t size)
 {
-    if (set_filtered_capture(original, filtered) != 0) {
+    if (init_filtered_capture(original, filtered) != 0) {
         return -1;
     }
 
@@ -279,7 +332,7 @@ int filter_from_to(
         uint8_t source_ip[4],
         uint8_t destination_ip[4])
 {
-    if (set_filtered_capture(original, filtered) != 0) {
+    if (init_filtered_capture(original, filtered) != 0) {
         return -1;
     }
 
@@ -317,7 +370,7 @@ int filter_from_mask(
     uint8_t mask[4] = { 0 };
     create_mask(mask_length, mask);
 
-    if (set_filtered_capture(original, filtered) != 0) {
+    if (init_filtered_capture(original, filtered) != 0) {
         return -1;
     }
 
@@ -355,7 +408,7 @@ int filter_to_mask(
     uint8_t mask[4] = { 0 };
     create_mask(mask_length, mask);
 
-    if (set_filtered_capture(original, filtered) != 0) {
+    if (init_filtered_capture(original, filtered) != 0) {
         return -1;
     }
 
@@ -383,6 +436,7 @@ int filter_to_mask(
     return 0;
 }
 
+// STATISTICS
 int print_flow_stats(const struct capture_t *const capture)
 {
     for (size_t i = 0; i < capture->number_of_packets; i++) {
@@ -404,6 +458,10 @@ int print_flow_stats(const struct capture_t *const capture)
         }
 
         struct capture_t *filtered = malloc(sizeof(struct capture_t));
+        if (filtered == NULL) {
+            fprintf(stderr, "Memory allocation fail\n");
+            return -1;
+        }
         filter_from_to(capture, filtered, src, dst);
 
         print_from_to_row(src, dst);
@@ -416,34 +474,13 @@ int print_flow_stats(const struct capture_t *const capture)
     return 0;
 }
 
-void set_new_timestamps(uint32_t start[2], uint32_t end[2],
-                        const struct capture_t *const capture)
-{
-    uint32_t start_sec = capture->packets[0].packet_header->ts_sec;
-    uint32_t start_usec = capture->packets[0].packet_header->ts_usec;
-    uint32_t end_sec = capture->packets[capture->number_of_packets - 1].packet_header->ts_sec;
-    uint32_t end_usec = capture->packets[capture->number_of_packets - 1].packet_header->ts_usec;
-
-    start[0] = start_sec;
-    start[1] = start_usec;
-    end[0] = end_sec;
-    end[1] = end_usec;
-}
-
-int32_t get_duration_sec(const struct capture_t *const capture)
-{
-    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_sec \
-    - (int32_t) capture->packets[0].packet_header->ts_sec;
-}
-
-int32_t get_duration_usec(const struct capture_t *const capture)
-{
-    return (int32_t) capture->packets[capture->number_of_packets - 1].packet_header->ts_usec \
-    - (int32_t) capture->packets[0].packet_header->ts_usec;
-}
-
 int print_longest_flow(const struct capture_t *const capture)
 {
+    if (capture->number_of_packets == 0) {
+        fprintf(stderr, "Received 0 packets.\n");
+        return -1;
+    }
+
     uint8_t flow_src_addr[4] = {0, 0, 0, 0};
     uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
     bool capture_found = false;
@@ -455,6 +492,7 @@ int print_longest_flow(const struct capture_t *const capture)
 
     struct capture_t *filtered = malloc(sizeof(struct capture_t));
     if (filtered == NULL) {
+        fprintf(stderr, "Memory allocation fail\n");
         return -1;
     }
 
@@ -472,7 +510,8 @@ int print_longest_flow(const struct capture_t *const capture)
         int32_t current_duration_usec = get_duration_usec(filtered);
 
         if (current_duration_sec == longest_durations[0]) {
-            if (current_duration_usec <= longest_durations[1]) {
+            if (current_duration_usec <= longest_durations[1]
+                && i > 0) { // if there is only one packet, it has the "longest duration"
                 destroy_capture(filtered);
                 continue;
             }
@@ -490,7 +529,6 @@ int print_longest_flow(const struct capture_t *const capture)
             longest_durations[0] = current_duration_sec;
             longest_durations[1] = current_duration_usec;
         }
-
         destroy_capture(filtered);
     }
 
