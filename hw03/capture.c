@@ -54,7 +54,6 @@ int load_capture(struct capture_t *capture, const char *filename)
         }
         capture->packets = packets_tmp;
 
-
         if (capture->packets == NULL) {
             destroy_capture(capture);
             destroy_context(context);
@@ -439,38 +438,26 @@ int filter_to_mask(
 // STATISTICS
 int print_flow_stats(const struct capture_t *const capture)
 {
+    struct capture_t *filtered = malloc(sizeof(struct capture_t));
+    if (filtered == NULL) {
+        fprintf(stderr, "Memory allocation fail\n");
+        return -1;
+    }
+
     for (size_t i = 0; i < capture->number_of_packets; i++) {
         uint8_t *src = capture->packets[i].ip_header->src_addr;
         uint8_t *dst = capture->packets[i].ip_header->dst_addr;
 
-        // src - dest pair was already counted
-        bool counted = false;
-        for (size_t j = 0; j < i; j++) {
-            if (is_same_ip(src, capture->packets[j].ip_header->src_addr)
-                && is_same_ip(dst, capture->packets[j].ip_header->dst_addr)) {
-                counted = true;
-                break;
-            }
-        }
-
-        if (counted) {
+        if (pair_already_analysed(capture, src, dst, i)) {
             continue;
         }
 
-        struct capture_t *filtered = malloc(sizeof(struct capture_t));
-        if (filtered == NULL) {
-            fprintf(stderr, "Memory allocation fail\n");
-            return -1;
-        }
         filter_from_to(capture, filtered, src, dst);
-
         print_from_to_row(src, dst);
         printf("%lu\n", packet_count(filtered));
-
         destroy_capture(filtered);
-        free(filtered);
-
     }
+    free(filtered);
     return 0;
 }
 
@@ -483,7 +470,6 @@ int print_longest_flow(const struct capture_t *const capture)
 
     uint8_t flow_src_addr[4] = {0, 0, 0, 0};
     uint8_t flow_dst_addr[4] = {0, 0, 0, 0};
-    bool capture_found = false;
 
     // position 0. -> timestamp in sec, position 1. -> timestamp in usec
     int32_t longest_durations[2] = {0, 0};
@@ -518,7 +504,6 @@ int print_longest_flow(const struct capture_t *const capture)
         }
 
         if (current_duration_sec >= longest_durations[0]) {
-            capture_found = true;
             for (int k = 0; k < 4; k++) {
                 flow_src_addr[k] = src[k];
                 flow_dst_addr[k] = dst[k];
@@ -530,12 +515,6 @@ int print_longest_flow(const struct capture_t *const capture)
             longest_durations[1] = current_duration_usec;
         }
         destroy_capture(filtered);
-    }
-
-    if (!capture_found) {
-        fprintf(stderr, "No flow found.\n");
-        free(filtered);
-        return -1;
     }
 
     print_from_to_row(flow_src_addr, flow_dst_addr);
