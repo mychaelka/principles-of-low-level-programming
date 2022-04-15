@@ -1,0 +1,10 @@
+./xpath /bookstore/book[@category=\"cooking\"] /bookstore/book[@category=\"cooking\"]
+./xpath -i /bookstore/book[@category=\"cooking\"] /bookstore/book[@category=\"cooking\"]
+./xpath /bookstore/book[@category=\"cooking\"]
+./xpath /bookstore/book[@category=\"cooking\"] -i /home/x460690/pb071/bookstore.xml
+./xpath -x -i -o /bookstore/book[@category=\"cooking\"]
+./xpath -x -i /bookstore/book[@category=\"cooking\"] -o /bookstore/book[@category=\"cooking\"]
+./xpath -t -t -i /bookstore/book[@category=\"cooking\"]
+./xpath -t -t -i
+./xpath -t -t -o
+./xpath -t -t -o -i
