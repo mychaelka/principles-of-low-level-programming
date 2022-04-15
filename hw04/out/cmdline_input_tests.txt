@@ -8,3 +8,9 @@
 ./xpath -t -t -i
 ./xpath -t -t -o
 ./xpath -t -t -o -i
+./xpath -t -t -a -o aser
+./xpath -i bookstore.xml /bookstore -> change permissions to write-only
+./xpath -i bookstore.xml /bookstore -> change permissions back
+./xpath -i bookstore.xml -x bookstore/book[@category=\"cooking\"]
+./xpath -i bookstore.xml -bookstore/book[@category=\"cooking\"] -o output
+./xpath -i bookstore.xml -x bookstore/book[@category=\"cooking\"] a

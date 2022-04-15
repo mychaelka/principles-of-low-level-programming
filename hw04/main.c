@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "xpath.h"
+#include "xparser.h"
 
 struct arguments
 {
@@ -22,9 +23,10 @@ int load_arguments(int argc, char **argv, struct arguments *args)
             fprintf(stderr, "Invalid arguments after XPATH\n");
             return -1;
         }
-        if (argv[opt][0] == '/') { // XPATH
+        if (argv[opt][0] != '-') {  // this must be XPATH
             args->xpath = argv[opt];
             args->xpath_specified = true;
+            continue;
         }
 
         if (strcmp(argv[opt], "-i") == 0 || strcmp(argv[opt], "--input") == 0) {
@@ -63,6 +65,7 @@ int load_arguments(int argc, char **argv, struct arguments *args)
                 return -1;
             }
             args->plain_text = true;
+            continue;
         }
         if (strcmp(argv[opt], "-x") == 0 || strcmp(argv[opt], "--xml") == 0) {
             if (args->plain_text) {
@@ -70,7 +73,11 @@ int load_arguments(int argc, char **argv, struct arguments *args)
                 return -1;
             }
             args->xml = true;
+            continue;
         }
+
+        fprintf(stderr, "Invalid option '%s'\n", argv[opt]);
+        return -1;
     }
 
     if (!args->xpath_specified) {
@@ -79,6 +86,7 @@ int load_arguments(int argc, char **argv, struct arguments *args)
     }
     return 0;
 }
+
 
 int main(int argc, char **argv)
 {
@@ -89,6 +97,10 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if (!is_valid_xpath(args.xpath)) {
+        return EXIT_FAILURE;
+    }
+
     if (args.input_specified) {
         FILE *in = fopen(args.input_file, "r");
         if (in == NULL) {
@@ -96,7 +108,10 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
+        struct node *node = parse_xml(in); //works only for the simple xml
         fclose(in);
+
+        printf("%s\n", node->name);
     }
 
     if (args.output_specified) {
@@ -107,8 +122,6 @@ int main(int argc, char **argv)
         }
         fclose(out);
     }
-
-
 
     return EXIT_SUCCESS;
 }
