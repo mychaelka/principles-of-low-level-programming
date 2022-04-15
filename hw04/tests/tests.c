@@ -63,12 +63,12 @@ TEST(nanecisto_zadani)
     );
 
     const char *test_model =
-        "  *<book +category *= *\"cooking\" *>"
-        "    *<title +lang *= *\"en\" *> *Everyday +Italian *</title *>"
-        "    *<author *> *Giada +De +Laurentiis *</author *>"
-        "    *<year *> *2005 *</year *>"
-        "    *<price *> *30.00 *</price *>"
-        "  *</book *>"
+        "  *< *book +category *= *\"cooking\" *>"
+        "    *< *title +lang *= *\"en\" *> *Everyday +Italian *</ *title *>"
+        "    *< *author *> *Giada +De +Laurentiis *</ *author *>"
+        "    *< *year *> *2005 *</ *year *>"
+        "    *< *price *> *30.00 *</ *price *>"
+        "  *</ *book *>"
     ;
 
     char *student_file = "out.xml";
@@ -99,14 +99,14 @@ TEST(nanecisto_zadani_vic_attrs)
     );
 
     const char *test_model =
-        "  *<bookstore *>"
-        "  *<book +category *= *\"cooking\" +colored *= *\"true\" *>"
-        "    *<title +lang *= *\"en\" *> *Everyday +Italian *</title *>"
-        "    *<author *> *Giada +De +Laurentiis *</author *>"
-        "    *<year *> *2005 *</year *>"
-        "    *<price *> *30.00 *</price *>"
-        "  *</book *>"
-        "  *</bookstore *>"
+        "  *< *bookstore *>"
+        "  *< *book +category *= *\"cooking\" +colored *= *\"true\" *>"
+        "    *< *title +lang *= *\"en\" *> *Everyday +Italian *</ *title *>"
+        "    *< *author *> *Giada +De +Laurentiis *</ *author *>"
+        "    *< *year *> *2005 *</ *year *>"
+        "    *< *price *> *30.00 *</ *price *>"
+        "  *</ *book *>"
+        "  *</ *bookstore *>"
     ;
 
     char *student_file = "out.xml";
