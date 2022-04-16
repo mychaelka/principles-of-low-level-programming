@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "list.h"
 
@@ -73,9 +72,10 @@ void list_init(struct list *list, size_t elem_size)
     // It is not clear which one of the conditions (or perhaps both of them)
     // is false. So you better keep the assertions separate.
 
-    list->head = NULL;
-    list->tail = NULL;
-    list->elem_size = elem_size;
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ UNUSED(elem_size);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 //-----------------------------------------------------------------------------
@@ -84,29 +84,10 @@ void list_init(struct list *list, size_t elem_size)
 
 bool list_push_back(struct list *list, const void *data)
 {
-    void *new_data = malloc(list->elem_size);
-    if (new_data == NULL){
-        return false;
-    }
-    memcpy(new_data, data, list->elem_size);
-    struct node *new_node = malloc(sizeof(struct node));
-    if (new_node == NULL){
-        free(new_data);
-        return false;
-    }
-
-    new_node->next = NULL;
-    new_node->data = new_data;
-
-    if (list->head == NULL){
-        list->head = new_node;
-        list->tail = new_node;
-    } else {
-        list->tail->next = new_node;
-        list->tail = new_node;
-    }
-
-    return true;
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ UNUSED(data);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 //-----------------------------------------------------------------------------
@@ -115,19 +96,16 @@ bool list_push_back(struct list *list, const void *data)
 
 size_t list_size(const struct list *list)
 {
-    size_t counter = 0;
-    struct node *curr_node = list->head;
-    while (curr_node != NULL)
-    {
-        counter++;
-        curr_node = curr_node->next;
-    }
-    return counter;
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 bool list_is_empty(const struct list *list)
 {
-    return list->head == NULL && list->tail == NULL;
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 //-----------------------------------------------------------------------------
@@ -136,23 +114,10 @@ bool list_is_empty(const struct list *list)
 
 bool list_pop_front(struct list *list, void *data)
 {
-    if (list->head == NULL){
-        return false;
-    }
-    if (data != NULL){
-        memcpy(data, list->head->data, list->elem_size);
-    }
-
-    struct node *first_node = list->head;
-    if (list->head == list->tail){
-        list->head = NULL;
-        list->tail = NULL;
-    } else {
-        list->head = list->head->next;
-    }
-
-    free(first_node);
-    return true;
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ UNUSED(data);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 //-----------------------------------------------------------------------------
@@ -161,11 +126,9 @@ bool list_pop_front(struct list *list, void *data)
 
 void list_destroy(struct list *list)
 {
-    while (!list_is_empty(list))
-    {
-        list_pop_front(list, NULL);
-    }
-    free(list);
+    /* TODO: Remove the following lines and implement the function. */
+    /* ! */ UNUSED(list);
+    /* ! */ NOT_IMPLEMENTED();
 }
 
 //-----------------------------------------------------------------------------
