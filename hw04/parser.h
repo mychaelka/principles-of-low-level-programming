@@ -86,10 +86,6 @@ struct parsing_state {
     struct parsing_error error;
 };
 
-/** @brief this function does what the fuck
-** @param data
-** @param function
-*/
 struct parsing_state parsing_state_init(void *data, fill_function function);
 
 int peek_char(struct parsing_state *state);

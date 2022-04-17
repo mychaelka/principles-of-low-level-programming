@@ -62,7 +62,7 @@ struct vector *parse_xnodes(struct parsing_state *state);
 struct node *parse_root(struct parsing_state *state);
 
 
-/** @brief this fucker works only on a very simple xml file with one element
+/** @brief this works only on a very simple xml file with one element
  * @param file input file
  */
 struct node *parse_xml(FILE *file);

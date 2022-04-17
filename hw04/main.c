@@ -3,6 +3,7 @@
 
 #include "xpath.h"
 #include "xparser.h"
+#include "vector.h"
 
 struct arguments
 {
@@ -108,10 +109,16 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        struct node *node = parse_xml(in); //works only for the simple xml
+        struct node *bookstore = parse_xml(in);
         fclose(in);
 
-        printf("%s\n", node->name);
+        printf("%s\n", bookstore->name);
+
+        struct node **book = vec_get(bookstore->children, 2);
+        printf("%s\n", (*book)->key);
+        printf("%s\n", (*book)->value);
+        struct node **title = vec_get((*book)->children, 3);
+        printf("%s\n", (*title)->text);
     }
 
     if (args.output_specified) {

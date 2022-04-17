@@ -122,7 +122,7 @@ mchar *parse_word(struct parsing_state *state, predicate start,
 
 static int name_start(int c)
 {
-    return c == '_' || c == ':' || isalpha(c);
+    return c == '_' || isalpha(c);
 }
 
 static int name_rest(int c)
@@ -130,11 +130,13 @@ static int name_rest(int c)
     return strchr("_:.-", c) != NULL || isdigit(c) || isalpha(c);
 }
 
+// checks if the name is valid (starts with _ or letter and contains valid characters,
+// if not, returns error. Returns the parsed name (mchar is typedef for char)
 mchar *parse_name(struct parsing_state *state)
 {
     assert(state != NULL);
 
-    return parse_word(state, name_start, name_rest, "letters or _ or :");
+    return parse_word(state, name_start, name_rest, "letters or _");
 }
 
 
@@ -392,35 +394,42 @@ void node_ptr_destroy(struct node **node)
 
 struct vector *parse_xnodes(struct parsing_state *state)
 {
+    // creates empty vector to which children should be stored
     struct vector *children = vec_create(sizeof(struct node *));
     if (children == NULL) {
         return NULL;
     }
 
+    // reads whitespace characters from buffer
     read_spaces(state, 0);
 
-    if (accept_char(state, '<')) {
-        const int next = peek_char(state);
-        return_char(state);
-        // If next character is '/', we know that this is an end tag,
-        // so there are no children → return empty vector
-        if (next == '/') {
-            return children;
-        }
-
-        struct node *child = parse_xnode(state);
-        if (child != NULL) {
-            if (vec_push_back(children, &child)) {
-                return children;
+    while (true) {
+        // children begin
+        if (accept_char(state, '<')) {
+            const int next = peek_char(state);
+            return_char(state); // shifts back left in buffer so that we do not move forward in reading
+            // If next character is '/', we know that this is an end tag,
+            // so there are no children → return empty vector
+            if (next == '/') {
+                break;
+                //return children; // next character after opening tag is slash, so it means end of node
             }
 
-            alloc_error(state, "adding child node to vector of nodes");
+            struct node *child = parse_xnode(state);
+
+            if (child != NULL) {
+                if (vec_push_back(children, &child)) {
+                    continue;
+                    //return children;
+                }
+
+                alloc_error(state, "adding child node to vector of nodes");
+            }
+
+            vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
+            return NULL;
         }
-
-        vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
-        return NULL;
     }
-
     read_spaces(state, 0);
 
     return children;
