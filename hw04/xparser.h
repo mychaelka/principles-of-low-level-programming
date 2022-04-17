@@ -40,11 +40,9 @@ mchar *parse_string(struct parsing_state *state, predicate valid_chars);
 mchar *parse_word(struct parsing_state *state, predicate start,
                   predicate rest, const char *error_message);
 
-
 /*****************************************************************************
  *  PARSING
  *****************************************************************************/
-
 mchar *parse_name(struct parsing_state *state);
 
 mchar *parse_text(struct parsing_state *state, bool normalize);

@@ -5,8 +5,21 @@
 #ifndef XPATH_H
 #define XPATH_H
 
-bool is_valid_xpath(char *xpath);
+typedef char* attribute;
 
-void parse_xpath(char *xpath);
+typedef attribute* attributes;
+
+struct element {
+    char * name;
+    int index;
+    attribute attribute;
+    char * attribute_value;
+};
+
+int write_xpath_to_file(const char* filename, const char* xpath);
+
+struct parsing_state read_xpath(FILE *file);
+
+struct node* find_element(struct parsing_state state, struct node* xml, char *xpath);
 
 #endif /* XPATH_H */
