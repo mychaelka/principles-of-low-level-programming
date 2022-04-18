@@ -104,8 +104,9 @@ int main(int argc, char **argv)
     }
 
     FILE *path = fopen("xpath.txt", "r");
-    struct parsing_state state = read_xpath(path);
-    fclose(path);
+    struct file_generator gen = { path };
+    struct parsing_state state = parsing_state_init(&gen, file_fill);//read_xpath(path);
+
 
     if (args.input_specified) {
         FILE *in = fopen(args.input_file, "r");
@@ -114,31 +115,23 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        struct node *bookstore = parse_xml(in);
+        struct node *node = parse_xml(in);
         fclose(in);
 
-        struct node *try_node = find_element(state, bookstore, args.xpath);
-        printf("%s\n", try_node->name);
+        args.xpath[0] = ' ';
+        size_t xpath_len = strlen(args.xpath);
+        take_while_delim(args.xpath);
+        print_tree_text(node, args.xpath, xpath_len, 0);
 
-
-
-
-        printf("%s\n", bookstore->name);
-
-        struct node **book = vec_get(bookstore->children, 2);
-        printf("Books: %lu\n", vec_size(bookstore->children));
-        printf("%s\n", (*book)->key);
-        printf("%s\n", (*book)->value);
-        struct node **title = vec_get((*book)->children, 3);
-        printf("%s\n", (*title)->text);
-        printf("XPATH: %s\n", args.xpath);
-
-        struct node *result = node_create("result", NULL, NULL, NULL, NULL);
-        if (result == NULL) {
-            fprintf(stderr, "Could not create result node\n");
-            return EXIT_FAILURE;
-        }
+        //struct node *result = node_create("result", NULL, NULL, NULL, NULL);
+        //if (result == NULL) {
+        //    fprintf(stderr, "Could not create result node\n");
+        //    return EXIT_FAILURE;
+        //}
+        node_destroy(node);
     }
+
+    fclose(path);
 
     if (args.output_specified) {
         FILE *out = fopen(args.output_file, "w");

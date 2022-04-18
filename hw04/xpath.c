@@ -1,17 +1,4 @@
 #include "xpath.h"
-#include "xparser.h"
-#include "vector.h"
-#include "parser.h"
-
-int parse_xpath(const char *xpath)
-{
-    if (xpath[0] != '\\') {
-        fprintf(stderr, "Invalid path");
-        return -1;
-    }
-
-    return 0;
-}
 
 int write_xpath_to_file(const char* filename, const char* xpath)
 {
@@ -29,37 +16,55 @@ struct parsing_state read_xpath(FILE *file)
 {
     struct file_generator gen = { file };
     struct parsing_state state = parsing_state_init(&gen, file_fill);
-
     return state;
 }
 
-static int delim(int c)
+
+void take_while_delim(char * xpath)
 {
-    return c != '/';
+    char * delim = "/";
+    char *ptr = strtok(xpath, delim);
+
+    while(ptr != NULL) { // puts \0 instead of delimiter everywhere
+        ptr = strtok(NULL, delim);
+    }
 }
 
-static int start(int c)
+void print_tree_text(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx)
 {
-    return c == '/';
-}
+    curr_idx += strlen(xpath) + 1;
 
-struct node* find_element(struct parsing_state state, struct node* xml, char *xpath)
-{
-    struct node *result = node_create("result", NULL, NULL, NULL, NULL);
+    //printf("xpath_len: %lu\n", xpath_len);
+    //printf("curr_idx: %lu\n", curr_idx);
+    //printf("xpath: %s\n", xpath);
 
-    struct vector *children = vec_create(sizeof(struct node *));
-    if (children == NULL) {
-        return NULL;
+    if (curr_idx >= xpath_len) {
+        if (node->children != NULL) {
+            for (size_t i = 0; i < vec_size(node->children); i++) {
+                struct node **curr_child = vec_get(node->children, i);
+                printf("%s\n", (*curr_child)->text);
+            }
+        } else {
+            printf("%s\n", node->text);
+        }
+        return;
     }
 
-    mchar *element = str_create("");
-    size_t i = 1;
-    while (xpath[i] != '/') {
-        str_add_char(&element, xpath[i]);
-        i++;
+    while (*xpath != '\0' && *xpath != EOF) {
+        xpath++;
+    }
+    if (*xpath == '\0') {
+        xpath++;
     }
 
-    printf("THIS IS THE ELEMENT: %s\n", element);
+    struct node** child = NULL;
+    if (node->children != NULL) {
+        for (size_t i = 0; i < vec_size(node->children); i++) {
+            child = vec_get(node->children, i);
 
-    return result;
+            if (strcmp(xpath, (*child)->name) == 0) {
+                print_tree_text(*child, xpath, xpath_len, curr_idx);
+            }
+        }
+    }
 }
