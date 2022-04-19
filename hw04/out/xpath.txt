@@ -1,1 +1,1 @@
-/bookstore/book/randoma
+/bookstore/book/title/name/letter

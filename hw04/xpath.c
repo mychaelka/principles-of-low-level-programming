@@ -30,40 +30,38 @@ void take_while_delim(char * xpath)
     }
 }
 
-void print_tree_text(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx)
+void print_subtree(struct node* node)
+{
+    if (node->children == NULL) {
+        printf("%s\n", node->text);
+    }
+    else {
+        for (size_t i = 0; i < vec_size(node->children); i++) {
+            struct node **curr_child = vec_get(node->children, i);
+            print_subtree(*curr_child);
+        }
+    }
+}
+
+
+void tree_descent(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx)
 {
     curr_idx += strlen(xpath) + 1;
 
-    //printf("xpath_len: %lu\n", xpath_len);
-    //printf("curr_idx: %lu\n", curr_idx);
-    //printf("xpath: %s\n", xpath);
-
     if (curr_idx >= xpath_len) {
-        if (node->children != NULL) {
-            for (size_t i = 0; i < vec_size(node->children); i++) {
-                struct node **curr_child = vec_get(node->children, i);
-                printf("%s\n", (*curr_child)->text);
-            }
-        } else {
-            printf("%s\n", node->text);
-        }
-        return;
+        print_subtree(node);
     }
 
-    while (*xpath != '\0' && *xpath != EOF) {
-        xpath++;
-    }
-    if (*xpath == '\0') {
-        xpath++;
-    }
+    size_t elem_size = strlen(xpath);
+    xpath += (elem_size + 1);
 
-    struct node** child = NULL;
+
     if (node->children != NULL) {
         for (size_t i = 0; i < vec_size(node->children); i++) {
-            child = vec_get(node->children, i);
+            struct node** child = vec_get(node->children, i);
 
             if (strcmp(xpath, (*child)->name) == 0) {
-                print_tree_text(*child, xpath, xpath_len, curr_idx);
+                tree_descent(*child, xpath, xpath_len, curr_idx);
             }
         }
     }

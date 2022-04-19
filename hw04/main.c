@@ -118,10 +118,10 @@ int main(int argc, char **argv)
         struct node *node = parse_xml(in);
         fclose(in);
 
-        args.xpath[0] = ' ';
         size_t xpath_len = strlen(args.xpath);
         take_while_delim(args.xpath);
-        print_tree_text(node, args.xpath, xpath_len, 0);
+        args.xpath++; // first delim was replaced by \0;
+        tree_descent(node, args.xpath, xpath_len, 0);
 
         //struct node *result = node_create("result", NULL, NULL, NULL, NULL);
         //if (result == NULL) {

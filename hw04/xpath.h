@@ -28,6 +28,6 @@ struct parsing_state read_xpath(FILE *file);
 
 void take_while_delim(char * xpath);
 
-void print_tree_text(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx);
+void tree_descent(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx);
 
 #endif /* XPATH_H */
