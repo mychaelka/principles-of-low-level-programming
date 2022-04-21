@@ -22,6 +22,7 @@ static size_t max(size_t a, size_t b)
  *  PARSING (RING) BUFFER
  *****************************************************************************/
 
+// fills buffer in parsing state at a given position
 bool buffer_fill_at(struct parsing_state *state, size_t start, size_t size)
 {
     assert(state != NULL);
@@ -44,6 +45,7 @@ bool buffer_fill_at(struct parsing_state *state, size_t start, size_t size)
     return written > 0;
 }
 
+// fills buffer from the start (step by step with buffer_fill_at function)
 bool buffer_fill(struct parsing_state *state)
 {
     assert(state != NULL);
@@ -59,6 +61,7 @@ bool buffer_fill(struct parsing_state *state)
     return buffer_fill_at(state, 0, size);
 }
 
+// looks at the next character in buffer, if the position is already the last one, returns to beginning
 int buffer_peek(struct parsing_buffer *buffer)
 {
     assert(buffer != NULL);
@@ -66,6 +69,7 @@ int buffer_peek(struct parsing_buffer *buffer)
     return buffer->buffer[(buffer->pos + 1) % BUFFER_SIZE];
 }
 
+// moves one character to the right in buffer
 void buffer_shift_right(struct parsing_buffer *buffer)
 {
     assert(buffer != NULL);
@@ -75,6 +79,7 @@ void buffer_shift_right(struct parsing_buffer *buffer)
     buffer->history = min(buffer->history + 1, LOOKAHEAD);
 }
 
+// moves one character to the left in buffer
 void buffer_shift_left(struct parsing_buffer *buffer)
 {
     assert(buffer != NULL);
@@ -90,6 +95,7 @@ void buffer_shift_left(struct parsing_buffer *buffer)
  *  GENERATORS
  *****************************************************************************/
 
+// fills buffer with data from file ?
 long file_fill(void *data, void *dest, size_t size)
 {
     assert(data != NULL);
@@ -105,6 +111,7 @@ long file_fill(void *data, void *dest, size_t size)
     return fread_ret;
 }
 
+// fills buffer with string data, returns number of read characters?
 long str_fill(void *data, void *dest, size_t size)
 {
     assert(data != NULL);
@@ -142,6 +149,7 @@ static void _error(struct parsing_state *state, enum parsing_error_code code,
     }
 }
 
+// prints generic error message "expecting sth, but got sth else instead"
 void parsing_error(struct parsing_state *state, const char *what)
 {
     const char c = peek_char(state);
@@ -149,16 +157,19 @@ void parsing_error(struct parsing_state *state, const char *what)
            what, c == -1 ? "EOF" : CHAR_TO_STR(c));
 }
 
+// prints allocation error message
 void alloc_error(struct parsing_state *state, const char *what)
 {
     _error(state, ALLOC_ERROR, "Not enough memory for '%s'", what);
 }
 
+// prints custom error message
 void other_error(struct parsing_state *state, const char *what)
 {
     _error(state, OTHER_ERROR, "%s", what);
 }
 
+// prints generic error message to output
 void print_error(struct parsing_state *state, FILE *output)
 {
     assert(state != NULL);
@@ -173,6 +184,7 @@ void print_error(struct parsing_state *state, FILE *output)
  *  PARSING
  *****************************************************************************/
 
+// initializes parsing_state structure with filling function
 struct parsing_state parsing_state_init(void *data, fill_function function)
 {
     assert(BUFFER_SIZE > LOOKAHEAD);
@@ -200,7 +212,7 @@ struct parsing_state parsing_state_init(void *data, fill_function function)
     };
 }
 
-
+// returns character currently in the buffer (does not move forward though)
 int peek_char(struct parsing_state *state)
 {
     assert(state != NULL);
@@ -216,6 +228,7 @@ int peek_char(struct parsing_state *state)
     return buffer_peek(&state->buffer);
 }
 
+// moves forward one character in buffer, if it is a newline character, jumps to next line
 int next_char(struct parsing_state *state)
 {
     assert(state != NULL);
@@ -233,6 +246,7 @@ int next_char(struct parsing_state *state)
     return next;
 }
 
+// compares character to expected character, if they match, returns true
 bool accept_char(struct parsing_state *state, char expected)
 {
     assert(state != NULL);
@@ -245,6 +259,7 @@ bool accept_char(struct parsing_state *state, char expected)
     return accepted;
 }
 
+// compares character in buffer to expected (uses previous function), if false, returns error
 bool pattern_char(struct parsing_state *state, char expected)
 {
     assert(state != NULL);
@@ -257,6 +272,7 @@ bool pattern_char(struct parsing_state *state, char expected)
     return is_correct;
 }
 
+// compares current character in buffer to pattern of expected characters
 bool pattern_str(struct parsing_state *state, const char *expected)
 {
     assert(state != NULL);
@@ -271,6 +287,7 @@ bool pattern_str(struct parsing_state *state, const char *expected)
     return true;
 }
 
+// reads all following whitespaces in buffer, also checks if number of read ws is >= minimum
 bool read_spaces(struct parsing_state *state, size_t minimum)
 {
     assert(state != NULL);
@@ -288,6 +305,7 @@ bool read_spaces(struct parsing_state *state, size_t minimum)
     return enough_spaces;
 }
 
+// steps back one character in buffer (does not return anything)
 void return_char(struct parsing_state *state)
 {
     buffer_shift_left(&state->buffer);

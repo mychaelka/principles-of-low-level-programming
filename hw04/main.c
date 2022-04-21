@@ -105,7 +105,13 @@ int main(int argc, char **argv)
 
     FILE *path = fopen("xpath.txt", "r");
     struct file_generator gen = { path };
-    struct parsing_state state = parsing_state_init(&gen, file_fill);//read_xpath(path);
+    struct parsing_state state = parsing_state_init(&gen, file_fill);
+
+    //struct parsing_state state = read_xpath(args.xpath);
+    if (!check_beginning_xpath(&state)) {
+        fprintf(stderr, "%s\n", state.error.message);
+        return EXIT_FAILURE;
+    }
 
 
     if (args.input_specified) {
@@ -118,20 +124,17 @@ int main(int argc, char **argv)
         struct node *node = parse_xml(in);
         fclose(in);
 
-        size_t xpath_len = strlen(args.xpath);
-        take_while_delim(args.xpath);
-        args.xpath++; // first delim was replaced by \0;
-        tree_descent(node, args.xpath, xpath_len, 0);
+        //parsing_print_test(&state);
+        descending(state, node);
+        //random_test(&state);
 
-        //struct node *result = node_create("result", NULL, NULL, NULL, NULL);
-        //if (result == NULL) {
-        //    fprintf(stderr, "Could not create result node\n");
-        //    return EXIT_FAILURE;
-        //}
+        //size_t xpath_len = strlen(args.xpath);
+        //take_while_delim(args.xpath);
+        //args.xpath++; // first delim was replaced by \0;
+        //tree_descent(node, args.xpath, xpath_len, 0);
+
         node_destroy(node);
     }
-
-    fclose(path);
 
     if (args.output_specified) {
         FILE *out = fopen(args.output_file, "w");

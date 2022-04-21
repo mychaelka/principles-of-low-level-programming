@@ -16,18 +16,30 @@ typedef char* attribute;
 typedef attribute* attributes;
 
 struct element {
-    char * name;
+    mchar * name;
     int index;
     attribute attribute;
     char * attribute_value;
 };
 
+struct xpath {
+    struct element* elements;
+};
+
 int write_xpath_to_file(const char* filename, const char* xpath);
 
-struct parsing_state read_xpath(FILE *file);
+struct parsing_state read_xpath_from_file(FILE *file);
 
-void take_while_delim(char * xpath);
+bool check_beginning_xpath(struct parsing_state* state);
 
-void tree_descent(struct node* node, char * xpath, size_t xpath_len, size_t curr_idx);
+struct parsing_state read_xpath(const char* xpath);
+
+void random_test(struct parsing_state* state);
+
+int parsing_print_test(struct parsing_state* state);
+
+void tree_descent(struct parsing_state state, struct node* node, mchar* xpath);
+
+void descending(struct parsing_state state, struct node* node);
 
 #endif /* XPATH_H */
