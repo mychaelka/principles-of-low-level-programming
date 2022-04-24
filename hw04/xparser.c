@@ -17,7 +17,7 @@
  *  DATA STRUCTURES
  *****************************************************************************/
 
-struct node *node_create(mchar *name, mchar *key, mchar *value,
+struct node *node_create(mchar *name, struct vector *keys, struct vector *values,
                          mchar *text, struct vector *children)
 {
     assert(name != NULL);
@@ -28,8 +28,8 @@ struct node *node_create(mchar *name, mchar *key, mchar *value,
         *node = (struct node) {
             .name = name,
             .text = text,
-            .key = key,
-            .value = value,
+            .keys = keys,
+            .values = values,
             .children = children
         };
     }
@@ -45,9 +45,9 @@ void node_destroy(struct node *node)
 
     str_destroy(node->name);
     str_destroy(node->text);
-    str_destroy(node->key);
-    str_destroy(node->value);
 
+    vec_destroy(node->keys, DESTRUCTOR(str_destroy));
+    vec_destroy(node->values, DESTRUCTOR(str_destroy));
     vec_destroy(node->children, DESTRUCTOR(node_ptr_destroy));
 
     free(node);
@@ -196,7 +196,6 @@ mchar *parse_text(struct parsing_state *state, bool normalize)
             return NULL;
         }
     }
-
     return text;
 }
 
@@ -241,20 +240,30 @@ mchar *parse_value(struct parsing_state *state)
  *****************************************************************************/
 
 static bool parse_attribute(struct parsing_state *state,
-                            mchar **key, mchar **value)
+                            struct vector *keys, struct vector *values)
 {
     assert(state != NULL);
 
-    *key = parse_name(state);
-    if (*key == NULL) {
+    mchar* key = parse_name(state);
+    if (key == NULL) {
         return false;
     }
 
     bool success = parse_equals(state);
-    success = success && (*value = parse_value(state)) != NULL;
+    mchar* value = parse_value(state);
+    success = success && value != NULL;
 
     if (!success) {
-        str_destroy(*key);
+        str_destroy(key);
+        str_destroy(value);
+    }
+    else {
+        if (!(vec_push_back(keys, key)
+            && vec_push_back(values, value))) {
+            str_destroy(key);
+            str_destroy(value);
+            return false;
+        }
     }
 
     return success;
@@ -268,20 +277,13 @@ static bool end_of_attributes(struct parsing_state *state)
     return c == EOF || c == '/' || c == '>' || c == '<'; // is this here necessary??
 }
 
-bool parse_attributes(struct parsing_state *state, mchar **key, mchar **value)
+bool parse_attributes(struct parsing_state *state, struct vector *keys, struct vector *values)
 {
     assert(state != NULL);
 
     if (end_of_attributes(state)) {
         return true;
     }
-
-    //const bool whitespace = read_spaces(state, 1);
-    //if (end_of_attributes(state)) {
-    //    return true;
-    //}
-
-    //return whitespace && parse_attribute(state, key, value);
 
     while (!end_of_attributes(state)) {
         bool whitespace = read_spaces(state, 1);
@@ -290,7 +292,7 @@ bool parse_attributes(struct parsing_state *state, mchar **key, mchar **value)
             return true;
         }
 
-        if (!(whitespace && parse_attribute(state, key, value))) {
+        if (!(whitespace && parse_attribute(state, keys, values))) {
             return false;
         }
     }
@@ -313,7 +315,7 @@ static bool check_end_tag(struct parsing_state *state, const mchar *name)
 }
 
 static struct node *parse_content(struct parsing_state *state, mchar *name,
-                                  mchar *key, mchar *value, bool is_empty)
+                                  struct vector* keys, struct vector *values, bool is_empty)
 {
     mchar *text = NULL;
     struct vector *children = NULL;
@@ -331,20 +333,18 @@ static struct node *parse_content(struct parsing_state *state, mchar *name,
 
     const bool parsed_content = is_empty || text != NULL || children != NULL;
     if (parsed_content && (is_empty || check_end_tag(state, name))) {
-        struct node *node = node_create(name, key, value, text, children);
+        struct node *node = node_create(name, keys, values, text, children);
         if (node != NULL) {
             return node;
         }
     }
 
-    str_destroy(text);
-    vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
-
+    //str_destroy(text);
     return NULL;
 }
 
 static bool parse_tag(struct parsing_state *state, mchar **name,
-                      mchar **key, mchar **value, bool *is_empty)
+                      struct vector *keys, struct vector *values, bool *is_empty)
 {
     if (!pattern_char(state, '<') || !read_spaces(state, 0)) {
         return false;
@@ -354,7 +354,7 @@ static bool parse_tag(struct parsing_state *state, mchar **name,
         return false;
     }
 
-    if (!parse_attributes(state, key, value)) {
+    if (!parse_attributes(state, keys, values)) {
         str_destroy(*name);
         return false;
     }
@@ -367,8 +367,6 @@ static bool parse_tag(struct parsing_state *state, mchar **name,
     }
 
     str_destroy(*name);
-    str_destroy(*key);
-    str_destroy(*value);
 
     return false;
 }
@@ -378,23 +376,26 @@ struct node *parse_xnode(struct parsing_state *state)
     read_spaces(state, 0);
 
     mchar *name = NULL;
-    mchar *key = NULL;
-    mchar *value = NULL;
 
-    bool is_empty = true;
-    if (!parse_tag(state, &name, &key, &value, &is_empty)) {
+    struct vector *keys = vec_create(2 * sizeof(mchar *)); // how long can these be?
+    if (keys == NULL) {
+        return NULL;
+    }
+    struct vector *values = vec_create(2 * sizeof(mchar *));
+    if (values == NULL) {
         return NULL;
     }
 
-    struct node *node = parse_content(state, name, key, value, is_empty);
+    bool is_empty = true;
+    if (!parse_tag(state, &name, keys, values, &is_empty)) {
+        return NULL;
+    }
+
+    struct node *node = parse_content(state, name, keys, values, is_empty);
     if (node != NULL) {
         read_spaces(state, 0);
         return node;
     }
-
-    str_destroy(name);
-    str_destroy(key);
-    str_destroy(value);
 
     return NULL;
 }
@@ -434,14 +435,11 @@ struct vector *parse_xnodes(struct parsing_state *state)
             if (child != NULL) {
                 if (vec_push_back(children, &child)) {
                     continue;
-                    //return children;
                 }
-
+                node_destroy(child);
                 alloc_error(state, "adding child node to vector of nodes");
+                return NULL;
             }
-
-            vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
-            return NULL;
         }
     }
     read_spaces(state, 0);

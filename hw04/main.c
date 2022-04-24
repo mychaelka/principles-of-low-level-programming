@@ -98,68 +98,53 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (write_xpath_to_file("xpath.txt", args.xpath) != 0) {
-        fprintf(stderr, "Could not write xpath to file\n");
-        return EXIT_FAILURE;
-    }
+    struct str_generator gen_str = { args.xpath, strlen(args.xpath) };
+    struct parsing_state state = parsing_state_init(&gen_str, str_fill);
 
-    FILE *path = fopen("xpath.txt", "r");
-    struct file_generator gen = { path };
-    struct parsing_state state = parsing_state_init(&gen, file_fill);
-
-    //struct parsing_state state = read_xpath(args.xpath);
     if (!check_beginning_xpath(&state)) {
         fprintf(stderr, "%s\n", state.error.message);
         return EXIT_FAILURE;
     }
 
-    struct node *node = NULL;
+    FILE *in = stdin;
 
     if (args.input_specified) {
-        FILE *in = fopen(args.input_file, "r");
+        in = fopen(args.input_file, "r");
         if (in == NULL) {
             fprintf(stderr, "Could not open file '%s'\n", args.input_file);
             return EXIT_FAILURE;
         }
+    }
 
-        node = parse_xml(in);
+    struct node *node = parse_xml(in);
+    if (node == NULL) {
         fclose(in);
+        return EXIT_FAILURE;
     }
-
-    else {
-        node = parse_xml(stdin);
-    }
+    fclose(in);
 
     if (args.output_specified) {
         FILE *out = fopen(args.output_file, "w");
         if (out == NULL) {
             fprintf(stderr, "Could not open file '%s'\n", args.output_file);
+            node_destroy(node);
             return EXIT_FAILURE;
         }
 
         if (descending(state, node, args.xml, out) != 0) {
+            node_destroy(node);
+            fclose(out);
             return EXIT_FAILURE;
         }
         fclose(out);
 
     } else {
-
-        //if (descending(state, node, args.xml, stdout) != 0) {
-        //    return EXIT_FAILURE;
-        //}
+        if (descending(state, node, args.xml, stdout) != 0) {
+            node_destroy(node);
+            return EXIT_FAILURE;
+        }
     }
 
-    struct node** book = vec_get(node->children, 1);
-    struct node** title = vec_get((*book)->children, 0);
-    printf("%s\n", (*title)->name);
-    printf("%s\n", (*title)->key);
-    //printf("%s\n", (*title)->value);
-    //(*title)->key++;
-    //printf("%s\n", *(*title)->key);
-    //print_attributes(*title);
-    //node_destroy(*book);
-
-    //node_destroy(node);
-
+    node_destroy(node);
     return EXIT_SUCCESS;
 }

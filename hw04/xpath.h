@@ -42,6 +42,6 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
 
 int descending(struct parsing_state state, struct node* node, bool xml, FILE *file);
 
-void print_attributes(struct node* node);
+void print_attributes(struct node* node, FILE *file);
 
 #endif /* XPATH_H */

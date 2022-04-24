@@ -73,6 +73,7 @@ static bool vec_realloc_double(struct vector *vec)
     return vec_realloc(vec, new_capacity);
 }
 
+
 bool vec_push_back(struct vector *vec, void *elem)
 {
     assert(vec != NULL);

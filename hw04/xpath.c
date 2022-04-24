@@ -82,12 +82,14 @@ void print_subtree(struct node* node, FILE *file)
     }
 }
 
-void print_attributes(struct node* node)
+void print_attributes(struct node* node, FILE *file)
 {
-    for (int i = 0; i < 2; i++) {
-        fprintf(stdout, "%s=\"%s\"\n", node->key, node->value);
-        node->key --;
-        node->value--;
+    if (node->keys != NULL && node->values != NULL) {
+        for (size_t i = 0; i < vec_size(node->keys); i++) {
+            mchar *key = vec_get(node->keys, i);
+            mchar *value = vec_get(node->values, i);
+            fprintf(file," %s=\"%s\"", key, value);
+        }
     }
 }
 
@@ -101,12 +103,16 @@ void print_subtree_xml(struct node* node, FILE *file, size_t depth)
     }
 
     if (node->children == NULL) {
-        fprintf(file,"<%s %s=\"%s\">", node->name, node->key, node->value);
-        fprintf(file," %s", node->text);
+        fprintf(file,"<%s", node->name);
+        print_attributes(node, file);
+        fprintf(file, ">");
+        fprintf(file," %s ", node->text);
         fprintf(file,"</%s>\n", node->name);
     }
     else {
-        fprintf(file,"<%s>\n", node->name);
+        fprintf(file,"<%s", node->name);
+        print_attributes(node, file);
+        fprintf(file, ">\n");
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node **curr_child = vec_get(node->children, i);
             print_subtree_xml(*curr_child, file, depth + 1);

@@ -14,20 +14,19 @@
 struct node {
     mchar *name;
 
-    mchar *key;
-    mchar *value;
+    struct vector *keys;
+    struct vector *values;
 
     mchar *text;
     struct vector *children;
 };
 
-struct node *node_create(mchar *name, mchar *key, mchar *value,
+struct node *node_create(mchar *name, struct vector *key, struct vector *value,
                          mchar *text, struct vector *children);
 
 void node_destroy(struct node *node);
 
 void node_ptr_destroy(struct node **node);
-
 
 /*****************************************************************************
  *  MISCELLANEOUS
@@ -51,7 +50,7 @@ bool parse_equals(struct parsing_state *state);
 
 mchar *parse_value(struct parsing_state *state);
 
-bool parse_attributes(struct parsing_state *state, mchar **key, mchar **value);
+bool parse_attributes(struct parsing_state *state, struct vector *keys, struct vector *values);
 
 struct node *parse_xnode(struct parsing_state *state);
 
