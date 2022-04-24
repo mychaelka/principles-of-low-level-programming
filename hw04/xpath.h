@@ -38,8 +38,8 @@ void random_test(struct parsing_state* state);
 
 int parsing_print_test(struct parsing_state* state);
 
-void tree_descent(struct parsing_state state, struct node* node, mchar* xpath);
+int tree_descent(struct parsing_state state, struct node* node, mchar* xpath);
 
-void descending(struct parsing_state state, struct node* node);
+int descending(struct parsing_state state, struct node* node);
 
 #endif /* XPATH_H */

@@ -125,7 +125,9 @@ int main(int argc, char **argv)
         fclose(in);
 
         //parsing_print_test(&state);
-        descending(state, node);
+        if (descending(state, node) != 0) {
+            return EXIT_FAILURE;
+        }
         //random_test(&state);
 
         //size_t xpath_len = strlen(args.xpath);
