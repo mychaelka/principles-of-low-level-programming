@@ -113,6 +113,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    struct node *node = NULL;
 
     if (args.input_specified) {
         FILE *in = fopen(args.input_file, "r");
@@ -121,21 +122,12 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        struct node *node = parse_xml(in);
+        node = parse_xml(in);
         fclose(in);
+    }
 
-        //parsing_print_test(&state);
-        if (descending(state, node) != 0) {
-            return EXIT_FAILURE;
-        }
-        //random_test(&state);
-
-        //size_t xpath_len = strlen(args.xpath);
-        //take_while_delim(args.xpath);
-        //args.xpath++; // first delim was replaced by \0;
-        //tree_descent(node, args.xpath, xpath_len, 0);
-
-        node_destroy(node);
+    else {
+        node = parse_xml(stdin);
     }
 
     if (args.output_specified) {
@@ -144,8 +136,30 @@ int main(int argc, char **argv)
             fprintf(stderr, "Could not open file '%s'\n", args.output_file);
             return EXIT_FAILURE;
         }
+
+        if (descending(state, node, args.xml, out) != 0) {
+            return EXIT_FAILURE;
+        }
         fclose(out);
+
+    } else {
+
+        //if (descending(state, node, args.xml, stdout) != 0) {
+        //    return EXIT_FAILURE;
+        //}
     }
+
+    struct node** book = vec_get(node->children, 1);
+    struct node** title = vec_get((*book)->children, 0);
+    printf("%s\n", (*title)->name);
+    printf("%s\n", (*title)->key);
+    //printf("%s\n", (*title)->value);
+    //(*title)->key++;
+    //printf("%s\n", *(*title)->key);
+    //print_attributes(*title);
+    //node_destroy(*book);
+
+    //node_destroy(node);
 
     return EXIT_SUCCESS;
 }

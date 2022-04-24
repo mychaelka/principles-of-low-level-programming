@@ -265,7 +265,7 @@ static bool end_of_attributes(struct parsing_state *state)
     assert(state != NULL);
 
     const int c = peek_char(state);
-    return c == EOF || c == '/' || c == '>' || c == '<';
+    return c == EOF || c == '/' || c == '>' || c == '<'; // is this here necessary??
 }
 
 bool parse_attributes(struct parsing_state *state, mchar **key, mchar **value)
@@ -276,12 +276,26 @@ bool parse_attributes(struct parsing_state *state, mchar **key, mchar **value)
         return true;
     }
 
-    const bool whitespace = read_spaces(state, 1);
-    if (end_of_attributes(state)) {
-        return true;
+    //const bool whitespace = read_spaces(state, 1);
+    //if (end_of_attributes(state)) {
+    //    return true;
+    //}
+
+    //return whitespace && parse_attribute(state, key, value);
+
+    while (!end_of_attributes(state)) {
+        bool whitespace = read_spaces(state, 1);
+
+        if (end_of_attributes(state)) {
+            return true;
+        }
+
+        if (!(whitespace && parse_attribute(state, key, value))) {
+            return false;
+        }
     }
 
-    return whitespace && parse_attribute(state, key, value);
+    return true;
 }
 
 

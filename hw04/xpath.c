@@ -46,7 +46,6 @@ mchar* get_xpath_part(struct parsing_state* state)
     int a = next_char(state);
 
     if (part == NULL && a != EOF) {
-        //fprintf(stderr, "%s\n", state->error.message);
         return NULL;
     }
 
@@ -66,30 +65,72 @@ mchar* get_xpath_part(struct parsing_state* state)
 }
 
 
-void print_subtree(struct node* node)
+void print_subtree(struct node* node, FILE *file)
 {
     if (node == NULL) {
         return;
     }
 
     if (node->children == NULL) {
-        printf("%s\n", node->text);
+        fprintf(file, "%s\n", node->text);
     }
     else {
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node **curr_child = vec_get(node->children, i);
-            print_subtree(*curr_child);
+            print_subtree(*curr_child, file);
         }
     }
 }
 
-int tree_descent(struct parsing_state state, struct node* node, mchar* xpath)
+void print_attributes(struct node* node)
+{
+    for (int i = 0; i < 2; i++) {
+        fprintf(stdout, "%s=\"%s\"\n", node->key, node->value);
+        node->key --;
+        node->value--;
+    }
+}
+
+void print_subtree_xml(struct node* node, FILE *file, size_t depth)
+{
+    if (node == NULL) {
+        return;
+    }
+    for (size_t i = 0; i < depth; i++) {
+        fprintf(file, "    ");
+    }
+
+    if (node->children == NULL) {
+        fprintf(file,"<%s %s=\"%s\">", node->name, node->key, node->value);
+        fprintf(file," %s", node->text);
+        fprintf(file,"</%s>\n", node->name);
+    }
+    else {
+        fprintf(file,"<%s>\n", node->name);
+        for (size_t i = 0; i < vec_size(node->children); i++) {
+            struct node **curr_child = vec_get(node->children, i);
+            print_subtree_xml(*curr_child, file, depth + 1);
+        }
+        for (size_t i = 0; i < depth; i++) {
+            fprintf(file, "    ");
+        }
+        fprintf(file, "</%s>\n", node->name);
+    }
+}
+
+int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file)
 {
     xpath = get_xpath_part(&state);
 
     if (xpath == NULL) {
         if (state.error.code == PARSING_SUCCESS) {
-            print_subtree(node);
+
+            if (xml) {
+                print_subtree_xml(node, file, 0);
+            }
+            else {
+                print_subtree(node, file);
+            }
             return 0;
         }
         else {
@@ -102,7 +143,7 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath)
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node** child = vec_get(node->children, i);
             if (strcmp(xpath, (*child)->name) == 0) {
-                if (tree_descent(state, *child, xpath) != 0) {
+                if (tree_descent(state, *child, xpath, xml, file) != 0) {
                     fprintf(stderr, "%s\n", state.error.message);
                     return -1;
                 }
@@ -118,7 +159,7 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath)
     return 0;
 }
 
-int descending(struct parsing_state state, struct node* node)
+int descending(struct parsing_state state, struct node* node, bool xml, FILE *file)
 {
     mchar* xpath = get_xpath_part(&state);
     if (xpath == NULL) {
@@ -126,7 +167,7 @@ int descending(struct parsing_state state, struct node* node)
         return -1;
     }
     if (strcmp(xpath, node->name) == 0) {
-        int rv = tree_descent(state, node, xpath);
+        int rv = tree_descent(state, node, xpath, xml, file);
         str_destroy(xpath);
         return rv;
     }
