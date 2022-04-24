@@ -1,1 +1,1 @@
-/bookstore/book/title
+/bookstore

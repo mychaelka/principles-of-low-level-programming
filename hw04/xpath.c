@@ -49,12 +49,12 @@ mchar* get_xpath_part(struct parsing_state* state)
         return NULL;
     }
 
-    if (a == '[') {
+    //if (a == '[') {
         //TODO - read until closing bracket
         // add a help function that reads the text inside the brackets
         // if it is an index, add a for loop to the recursive descent function?
         // if it is an attribute, add a condition
-    }
+   // }
 
     if (a != '/' && a != 16 && a != EOF && a != '\n') { // 16 = data link escape, what the f is that
         parsing_error(state, "/ or EOF");
