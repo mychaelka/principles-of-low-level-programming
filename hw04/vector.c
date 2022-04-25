@@ -1,4 +1,5 @@
 #include "vector.h"
+#include "managed_string.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -113,4 +114,19 @@ bool vec_empty(const struct vector *vec)
     assert(vec != NULL);
 
     return vec_size(vec) == 0u;
+}
+
+void print_vector_capacity(struct vector* vec)
+{
+    printf("CAPACITY: %lu\n", vec->capacity);
+    printf("SIZE: %lu\n", vec->capacity);
+}
+
+void free_vector(struct vector* vec)
+{
+    if (vec == NULL) {
+        return;
+    }
+    free(vec->data);
+    free(vec);
 }

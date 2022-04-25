@@ -46,10 +46,9 @@ void node_destroy(struct node *node)
     str_destroy(node->name);
     str_destroy(node->text);
 
-    vec_destroy(node->keys, DESTRUCTOR(str_destroy));
-    vec_destroy(node->values, DESTRUCTOR(str_destroy));
+    free_vector(node->keys);
+    free_vector(node->values);
     vec_destroy(node->children, DESTRUCTOR(node_ptr_destroy));
-
     free(node);
 }
 
@@ -251,15 +250,23 @@ static bool parse_attribute(struct parsing_state *state,
 
     bool success = parse_equals(state);
     mchar* value = parse_value(state);
-    success = success && value != NULL;
+    if (value == NULL) {
+        str_destroy(key);
+        return false;
+    }
+    //success = success && value != NULL;
 
     if (!success) {
         str_destroy(key);
         str_destroy(value);
     }
     else {
-        if (!(vec_push_back(keys, key)
-            && vec_push_back(values, value))) {
+        if (!vec_push_back(keys, key)) {
+            str_destroy(key);
+            str_destroy(value);
+            return false;
+        }
+        if (!vec_push_back(values, value)) {
             str_destroy(key);
             str_destroy(value);
             return false;
@@ -339,7 +346,8 @@ static struct node *parse_content(struct parsing_state *state, mchar *name,
         }
     }
 
-    //str_destroy(text);
+    str_destroy(text);
+    vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
     return NULL;
 }
 
@@ -367,7 +375,8 @@ static bool parse_tag(struct parsing_state *state, mchar **name,
     }
 
     str_destroy(*name);
-
+    //str_destroy(*key);
+    //str_destroy(*value);
     return false;
 }
 
@@ -381,13 +390,18 @@ struct node *parse_xnode(struct parsing_state *state)
     if (keys == NULL) {
         return NULL;
     }
+
     struct vector *values = vec_create(2 * sizeof(mchar *));
     if (values == NULL) {
+        free(keys);
+        //vec_destroy(keys, DESTRUCTOR(str_destroy));
         return NULL;
     }
 
     bool is_empty = true;
     if (!parse_tag(state, &name, keys, values, &is_empty)) {
+        vec_destroy(keys, DESTRUCTOR(str_destroy));
+        vec_destroy(values, DESTRUCTOR(str_destroy));
         return NULL;
     }
 
@@ -397,6 +411,9 @@ struct node *parse_xnode(struct parsing_state *state)
         return node;
     }
 
+    str_destroy(name);
+    vec_destroy(keys, DESTRUCTOR(str_destroy));
+    vec_destroy(values, DESTRUCTOR(str_destroy));
     return NULL;
 }
 
@@ -436,10 +453,13 @@ struct vector *parse_xnodes(struct parsing_state *state)
                 if (vec_push_back(children, &child)) {
                     continue;
                 }
-                node_destroy(child);
                 alloc_error(state, "adding child node to vector of nodes");
-                return NULL;
             }
+            vec_destroy(children, DESTRUCTOR(node_ptr_destroy));
+            return NULL;
+        }
+        else {
+            break;
         }
     }
     read_spaces(state, 0);

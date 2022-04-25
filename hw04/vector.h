@@ -28,5 +28,10 @@ size_t vec_size(const struct vector *vec);
 
 bool vec_empty(const struct vector *vec);
 
+void print_vector_capacity(struct vector* vec);
+
+void free_vector(struct vector* vec);
+
+void vec_destroy2(struct vector *vec);
 
 #endif /* VECTOR_H */

@@ -98,6 +98,15 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if (write_xpath_to_file("xpath.txt", args.xpath) != 0) {
+        fprintf(stderr, "Could not write xpath to file\n");
+        return EXIT_FAILURE;
+    }
+
+    //FILE *path = fopen("xpath.txt", "r");
+    //struct file_generator gen = { path };
+    //struct parsing_state state = parsing_state_init(&gen, file_fill);
+
     struct str_generator gen_str = { args.xpath, strlen(args.xpath) };
     struct parsing_state state = parsing_state_init(&gen_str, str_fill);
 
@@ -146,5 +155,7 @@ int main(int argc, char **argv)
     }
 
     node_destroy(node);
+    //fclose(path);
+    //vec_destroy(node->children, DESTRUCTOR(node_ptr_destroy));
     return EXIT_SUCCESS;
 }
