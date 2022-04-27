@@ -155,7 +155,5 @@ int main(int argc, char **argv)
     }
 
     node_destroy(node);
-    //fclose(path);
-    //vec_destroy(node->children, DESTRUCTOR(node_ptr_destroy));
     return EXIT_SUCCESS;
 }

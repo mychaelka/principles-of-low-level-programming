@@ -1,5 +1,10 @@
-#include "xpath.h"
 #include <ctype.h>
+#include "xpath.h"
+
+struct attribute {
+    mchar* key;
+    mchar* value;
+};
 
 int write_xpath_to_file(const char* filename, const char* xpath)
 {
@@ -36,27 +41,75 @@ struct parsing_state read_xpath(const char *xpath)
 }
 
 
-mchar* get_xpath_part(struct parsing_state* state)
+
+mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, size_t* index)
 {
     if (peek_char(state) == EOF) {
         return NULL;
     }
-    mchar* part = parse_name(state);
 
+    mchar* part = parse_name(state);
     int a = next_char(state);
 
     if (part == NULL && a != EOF) {
         return NULL;
     }
 
-    //if (a == '[') {
-        //TODO - read until closing bracket
-        // add a help function that reads the text inside the brackets
-        // if it is an index, add a for loop to the recursive descent function?
-        // if it is an attribute, add a condition
-   // }
+    if (a == '/' && peek_char(state) == EOF) {  // string ended by slash - illegal
+        parsing_error(state, "letters or _");
+        return NULL;
+    }
 
-    if (a != '/' && a != 16 && a != EOF && a != '\n') { // 16 = data link escape, what the f is that
+    if (a == '[') {
+
+        if (isdigit(peek_char(state))) {
+            *index = (size_t) parse_string(state, isalpha);
+            if (*index == 0) {
+                parsing_error(state, "index > 0");
+                return NULL;
+            }
+            if (next_char(state) != ']') {
+                parsing_error(state, "]");
+                return NULL;
+            }
+            return part;
+        }
+
+
+        if (peek_char(state) != '@') {
+            parsing_error(state, "@");
+            return NULL;
+        }
+        next_char(state);
+        attribute->key = parse_name(state);
+        if (peek_char(state) != ']') {
+            if (!parse_equals(state)) {
+                return NULL;
+            }
+            if (next_char(state) != '"') {
+                parsing_error(state, "\"");
+                return NULL;
+            }
+            attribute->value = parse_name(state);
+            if (next_char(state) != '"') {
+                parsing_error(state, "\"");
+                return NULL;
+            }
+            if (next_char(state) != ']') {
+                parsing_error(state, "]");
+                return NULL;
+            }
+            return part;
+        }
+        else {
+            next_char(state);
+            if (peek_char(state) == EOF) {
+                return part;
+            }
+        }
+    }
+
+    if (a != '/' && a != EOF && a != '\n') {
         parsing_error(state, "/ or EOF");
         return NULL;
     }
@@ -86,9 +139,9 @@ void print_attributes(struct node* node, FILE *file)
 {
     if (node->keys != NULL && node->values != NULL) {
         for (size_t i = 0; i < vec_size(node->keys); i++) {
-            mchar *key = vec_get(node->keys, i);
-            mchar *value = vec_get(node->values, i);
-            fprintf(file," %s=\"%s\"", key, value);
+            mchar **key = vec_get(node->keys, i);
+            mchar **value = vec_get(node->values, i);
+            fprintf(file," %s=\"%s\"", *key, *value);
         }
     }
 }
@@ -124,17 +177,55 @@ void print_subtree_xml(struct node* node, FILE *file, size_t depth)
     }
 }
 
+bool attribute_equals(const mchar* key, const mchar* value, struct vector* keys, struct vector* values) {
+    assert((keys == NULL && values == NULL) || (vec_size(keys) == vec_size(values)));
+
+    if (key == NULL && value == NULL) {
+        return true;
+    }
+
+    if (key != NULL && value == NULL) {
+        if (keys == NULL) {
+            return false;
+        }
+        for (size_t i = 0; i < vec_size(keys); i++) {
+            mchar** curr_key = vec_get(keys, i);
+            if (strcmp(key, *curr_key) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    if (key != NULL && value != NULL) {
+        if (keys == NULL || values == NULL) {
+            return false;
+        }
+        for (size_t i = 0; i < vec_size(keys); i++) {
+            mchar** curr_key = vec_get(keys, i);
+            mchar** curr_value = vec_get(values, i);
+            if (strcmp(key, *curr_key) == 0 && strcmp(value, *curr_value) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    return false;
+}
+
 int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file)
 {
-    xpath = get_xpath_part(&state);
+    struct attribute attribute = {NULL, NULL};
+    size_t index = 0;
+    xpath = get_xpath_part(&state, &attribute, &index);
 
     if (xpath == NULL) {
         if (state.error.code == PARSING_SUCCESS) {
 
             if (xml) {
                 print_subtree_xml(node, file, 0);
-            }
-            else {
+            } else {
                 print_subtree(node, file);
             }
             return 0;
@@ -148,10 +239,15 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
     if (node->children != NULL) {
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node** child = vec_get(node->children, i);
+
             if (strcmp(xpath, (*child)->name) == 0) {
-                if (tree_descent(state, *child, xpath, xml, file) != 0) {
-                    fprintf(stderr, "%s\n", state.error.message);
-                    return -1;
+
+                if (attribute_equals(attribute.key, attribute.value,
+                                     (*child)->keys, (*child)->values)) {
+                    if (tree_descent(state, *child, xpath, xml, file) != 0) {
+                        fprintf(stderr, "%s\n", state.error.message);
+                        return -1;
+                    }
                 }
             }
         }
@@ -167,15 +263,21 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
 
 int descending(struct parsing_state state, struct node* node, bool xml, FILE *file)
 {
-    mchar* xpath = get_xpath_part(&state);
+    struct attribute attribute = {NULL, NULL};
+    size_t index = 0;
+    mchar* xpath = get_xpath_part(&state, &attribute, &index);
+
     if (xpath == NULL) {
         fprintf(stderr, "%s\n", state.error.message);
         return -1;
     }
+
     if (strcmp(xpath, node->name) == 0) {
-        int rv = tree_descent(state, node, xpath, xml, file);
-        str_destroy(xpath);
-        return rv;
+        if (attribute_equals(attribute.key, attribute.value, node->keys, node->values)) {
+            int rv = tree_descent(state, node, xpath, xml, file);
+            str_destroy(xpath);
+            return rv;
+        }
     }
 
     str_destroy(xpath);

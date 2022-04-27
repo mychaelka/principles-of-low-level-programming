@@ -116,12 +116,6 @@ bool vec_empty(const struct vector *vec)
     return vec_size(vec) == 0u;
 }
 
-void print_vector_capacity(struct vector* vec)
-{
-    printf("CAPACITY: %lu\n", vec->capacity);
-    printf("SIZE: %lu\n", vec->capacity);
-}
-
 void free_vector(struct vector* vec)
 {
     if (vec == NULL) {

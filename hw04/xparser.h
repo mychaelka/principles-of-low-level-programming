@@ -28,6 +28,8 @@ void node_destroy(struct node *node);
 
 void node_ptr_destroy(struct node **node);
 
+void str_ptr_destroy(mchar **str);
+
 /*****************************************************************************
  *  MISCELLANEOUS
  *****************************************************************************/
