@@ -138,7 +138,25 @@ mchar *parse_name(struct parsing_state *state)
     return parse_word(state, name_start, name_rest, "letters or _");
 }
 
+mchar* parse_digit(struct parsing_state *state)
+{
+    assert(state != NULL);
 
+    return parse_word(state, isdigit, isdigit, "digit");
+}
+
+size_t str_to_digit(const mchar* str)
+{
+    size_t number = 0;
+
+    while (*str != '\0') {
+        number *= 10;
+        number += *str - '0';
+        str++;
+    }
+
+    return number;
+}
 /*****************************************************************************
  *  TEXT
  *****************************************************************************/

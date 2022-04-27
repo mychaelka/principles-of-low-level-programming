@@ -60,6 +60,9 @@ struct vector *parse_xnodes(struct parsing_state *state);
 
 struct node *parse_root(struct parsing_state *state);
 
+mchar* parse_digit(struct parsing_state *state);
+
+size_t str_to_digit(const mchar* str);
 
 /** @brief this works only on a very simple xml file with one element
  * @param file input file

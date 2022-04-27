@@ -62,12 +62,15 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
 
     if (a == '[') {
 
+        // INDICES
         if (isdigit(peek_char(state))) {
-            *index = (size_t) parse_string(state, isalpha);
+            *index = str_to_digit(parse_digit(state)); //TODO: number overflow
             if (*index == 0) {
-                parsing_error(state, "index > 0");
+                return_char(state);
+                parsing_error(state, "nonzero digit");
                 return NULL;
             }
+
             if (next_char(state) != ']') {
                 parsing_error(state, "]");
                 return NULL;
@@ -75,7 +78,7 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
             return part;
         }
 
-
+        // ATTRIBUTES
         if (peek_char(state) != '@') {
             parsing_error(state, "@");
             return NULL;
@@ -83,9 +86,11 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
         next_char(state);
         attribute->key = parse_name(state);
         if (peek_char(state) != ']') {
+            // IN THIS CASE, EQUAL SIGN HAS TO FOLLOW
             if (!parse_equals(state)) {
                 return NULL;
             }
+
             if (next_char(state) != '"') {
                 parsing_error(state, "\"");
                 return NULL;
@@ -243,7 +248,8 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
             if (strcmp(xpath, (*child)->name) == 0) {
 
                 if (attribute_equals(attribute.key, attribute.value,
-                                     (*child)->keys, (*child)->values)) {
+                                     (*child)->keys, (*child)->values)
+                                     && (index == 0 || index == i + 1)) {
                     if (tree_descent(state, *child, xpath, xml, file) != 0) {
                         fprintf(stderr, "%s\n", state.error.message);
                         return -1;
@@ -268,6 +274,7 @@ int descending(struct parsing_state state, struct node* node, bool xml, FILE *fi
     mchar* xpath = get_xpath_part(&state, &attribute, &index);
 
     if (xpath == NULL) {
+        parsing_error(&state, "letters or _");
         fprintf(stderr, "%s\n", state.error.message);
         return -1;
     }
