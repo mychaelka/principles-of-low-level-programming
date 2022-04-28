@@ -6,41 +6,10 @@ struct attribute {
     mchar* value;
 };
 
-int write_xpath_to_file(const char* filename, const char* xpath)
-{
-    FILE *out = fopen(filename, "w");
-    if (xpath == NULL) {
-        fprintf(stderr, "Could not write xpath\n");
-        return -1;
-    }
-    fprintf(out, "%s\n", xpath);
-    fclose(out);
-    return 0;
-}
-
-struct parsing_state read_xpath_from_file(FILE *file)
-{
-    struct file_generator gen = { file };
-    struct parsing_state state = parsing_state_init(&gen, file_fill);
-    return state;
-}
-
-
 bool check_beginning_xpath(struct parsing_state* state)
 {
     return pattern_char(state, '/');
 }
-
-
-struct parsing_state read_xpath(const char *xpath)
-{
-    struct str_generator gen = { xpath, strlen(xpath) };
-    struct parsing_state state = parsing_state_init(&gen, str_fill);
-
-    return state;
-}
-
-
 
 mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, size_t* index)
 {
@@ -57,6 +26,7 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
 
     if (a == '/' && peek_char(state) == EOF) {  // string ended by slash - illegal
         parsing_error(state, "letters or _");
+        str_destroy(part);
         return NULL;
     }
 
@@ -64,23 +34,30 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
 
         // INDICES
         if (isdigit(peek_char(state))) {
-            *index = str_to_digit(parse_digit(state)); //TODO: number overflow
+            mchar* digit = parse_digit(state);
+            *index = str_to_digit(digit); //TODO: number overflow
             if (*index == 0) {
                 return_char(state);
                 parsing_error(state, "nonzero digit");
+                str_destroy(digit);
+                str_destroy(part);
                 return NULL;
             }
 
             if (next_char(state) != ']') {
                 parsing_error(state, "]");
+                str_destroy(digit);
+                str_destroy(part);
                 return NULL;
             }
+            str_destroy(digit);
             return part;
         }
 
         // ATTRIBUTES
         if (peek_char(state) != '@') {
             parsing_error(state, "@");
+            str_destroy(part);
             return NULL;
         }
         next_char(state);
@@ -88,20 +65,24 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
         if (peek_char(state) != ']') {
             // IN THIS CASE, EQUAL SIGN HAS TO FOLLOW
             if (!parse_equals(state)) {
+                str_destroy(part);
                 return NULL;
             }
 
             if (next_char(state) != '"') {
                 parsing_error(state, "\"");
+                str_destroy(part);
                 return NULL;
             }
             attribute->value = parse_name(state);
             if (next_char(state) != '"') {
                 parsing_error(state, "\"");
+                str_destroy(part);
                 return NULL;
             }
             if (next_char(state) != ']') {
                 parsing_error(state, "]");
+                str_destroy(part);
                 return NULL;
             }
             return part;
@@ -116,6 +97,7 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
 
     if (a != '/' && a != EOF && a != '\n') {
         parsing_error(state, "/ or EOF");
+        str_destroy(part);
         return NULL;
     }
 
@@ -219,19 +201,17 @@ bool attribute_equals(const mchar* key, const mchar* value, struct vector* keys,
     return false;
 }
 
-int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file)
+int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file, struct vector* result)
 {
+    assert(result != NULL);
     struct attribute attribute = {NULL, NULL};
     size_t index = 0;
     xpath = get_xpath_part(&state, &attribute, &index);
 
     if (xpath == NULL) {
         if (state.error.code == PARSING_SUCCESS) {
-
-            if (xml) {
-                print_subtree_xml(node, file, 0);
-            } else {
-                print_subtree(node, file);
+            if (!vec_push_back(result, &node)) {
+                return -1;
             }
             return 0;
         }
@@ -250,7 +230,7 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
                 if (attribute_equals(attribute.key, attribute.value,
                                      (*child)->keys, (*child)->values)
                                      && (index == 0 || index == i + 1)) {
-                    if (tree_descent(state, *child, xpath, xml, file) != 0) {
+                    if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
                         fprintf(stderr, "%s\n", state.error.message);
                         return -1;
                     }
@@ -269,6 +249,10 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
 
 int descending(struct parsing_state state, struct node* node, bool xml, FILE *file)
 {
+    struct vector* result = vec_create(sizeof(struct node*));
+    if (result == NULL) {
+        return -1;
+    }
     struct attribute attribute = {NULL, NULL};
     size_t index = 0;
     mchar* xpath = get_xpath_part(&state, &attribute, &index);
@@ -276,17 +260,46 @@ int descending(struct parsing_state state, struct node* node, bool xml, FILE *fi
     if (xpath == NULL) {
         parsing_error(&state, "letters or _");
         fprintf(stderr, "%s\n", state.error.message);
+        vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
         return -1;
     }
 
     if (strcmp(xpath, node->name) == 0) {
         if (attribute_equals(attribute.key, attribute.value, node->keys, node->values)) {
-            int rv = tree_descent(state, node, xpath, xml, file);
+            if (tree_descent(state, node, xpath, xml, file, result) == 0) {
+                if (vec_size(result) == 0) {
+                    vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+                    str_destroy(xpath);
+                    return 0;
+                }
+                if (xml && vec_size(result) > 1) {
+                    mchar *name = str_create("result");
+                    struct node* res = node_create(name, NULL, NULL, NULL, result);
+                    print_subtree_xml(res, file, 0);
+                    //free(res);
+                }
+                else if (xml){
+                    struct node **res = vec_get(result, 0);
+                    print_subtree_xml(*res, file, 0);
+                }
+                else {
+                    for (size_t i = 0; i < vec_size(result); i++) {
+                        struct node **res = vec_get(result, i);
+                        print_subtree(*res, file);
+                    }
+                }
+                //vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+                str_destroy(xpath);
+                return 0;
+            }
+
+            vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
             str_destroy(xpath);
-            return rv;
+            return -1;
         }
     }
 
+    vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
     str_destroy(xpath);
     return 0;
 }

@@ -121,3 +121,177 @@ TEST(nanecisto_zadani_vic_attrs)
     remove(student_file);
     ASSERT(test_retval == 1);
 }
+
+TEST(multiple_input)
+{
+    ARGS( "xpath", "-x", "-i", "bookstore.xml", "-i", "bookstore.xml","/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(same_input_output)
+{
+    INPUT_STRING(
+            "  <bookstore >\n"
+            "  <book category = \"cooking\" colored = \"true\" >\n"
+            "    <title lang = \"en\" > Everyday Italian </title >\n"
+            "    <author > Giada De Laurentiis </author >\n"
+            "    <year > 2005 </year >\n"
+            "    <price > 30.00 </price >\n"
+            "  </book >\n"
+            "  </bookstore          >\n"
+    );
+
+    ARGS( "xpath", "-x", "-o", "out.xml", "-i", "out.xml","/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(multiple_output)
+{
+    ARGS( "xpath", "-x", "-o", "out.xml", "-o", "out.xml","/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(multiple_output2)
+{
+    ARGS( "xpath", "-o", "out.xml", "-o", "out.xml", "-x", "/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(input_long)
+{
+    ARGS( "xpath", "--input", "bookstore.xml", "-x", "/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(x_and_t)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "-x", "/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(xml_weird_names)
+{
+    ARGS( "xpath", "-x", "--input", "no_letters.xml", "/_45:../_-45:../_.--" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+    ASSERT_FILE(stdout, "<_.-- lang=\"en\"> Everyday Italian </_.-->\n");
+}
+
+TEST(wrong_args)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "-y", "/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(multiple_roots)
+{
+    ARGS( "xpath", "-t", "--input", "multiple_roots.xml", "/bookstore" );
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(empty_xpath)
+{
+    ARGS( "xpath", "-t", "--input", "multiple_roots.xml");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+    ASSERT_FILE(stderr, "Positional argument XPATH required\n");
+}
+
+TEST(missing_end_tag)
+{
+    ARGS( "xpath", "-t", "--input", "no_end_tag.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(different_end_tag)
+{
+    ARGS( "xpath", "-t", "--input", "different_end_tag.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(whitespaces_good)
+{
+    ARGS( "xpath", "-t", "--input", "whitespaces.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(whitespaces_good_bad)
+{
+    ARGS( "xpath", "-t", "--input", "wrong_whitespaces.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(empty_name)
+{
+    ARGS( "xpath", "-t", "--input", "empty_name.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(empty_text)
+{
+    ARGS( "xpath", "-t", "--input", "empty_text.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(special_character_in_text)
+{
+    ARGS( "xpath", "-t", "--input", "bad_text.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(not_unique_attributes)
+{
+    ARGS( "xpath", "-t", "--input", "no_unique_attributes.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(not_spaces_between_attributes)
+{
+    ARGS( "xpath", "-t", "--input", "no_spaces_between_attributes.xml", "/bookstore");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(xpath_zero_index)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "/bookstore/book[0]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(xpath_big_number_success)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "/bookstore/book[45]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(xpath_big_number_overflow)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "/bookstore/book[65446568345546835463534658]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(xpath_negative_index)
+{
+    ARGS( "xpath", "-t", "--input", "bookstore.xml", "/bookstore/book[-4]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
