@@ -295,3 +295,45 @@ TEST(xpath_negative_index)
     int main_retval = student_main(argc, argv);
     ASSERT(main_retval == 1);
 }
+
+TEST(xpath_correct_attribute)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@category=\"web\"]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(xpath_nonexistent_attribute)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@category=\"hehe\"]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 0);
+}
+
+TEST(attribute_without_value)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@category=]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(attribute_without_key)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@=\"category\"]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(attribute_without_quotation_marks)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@category=web]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}
+
+TEST(attribute_whitespace_around_equal)
+{
+    ARGS( "xpath", "-x", "--input", "bookstore.xml", "/bookstore/book[@category=   \"web]");
+    int main_retval = student_main(argc, argv);
+    ASSERT(main_retval == 1);
+}

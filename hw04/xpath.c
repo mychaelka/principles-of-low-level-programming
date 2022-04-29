@@ -62,27 +62,42 @@ mchar* get_xpath_part(struct parsing_state* state, struct attribute* attribute, 
         }
         next_char(state);
         attribute->key = parse_name(state);
+        if (attribute->key == NULL) {
+            str_destroy(part);
+            return NULL;
+        }
         if (peek_char(state) != ']') {
             // IN THIS CASE, EQUAL SIGN HAS TO FOLLOW
             if (!parse_equals(state)) {
                 str_destroy(part);
+                str_destroy(attribute->key);
                 return NULL;
             }
 
             if (next_char(state) != '"') {
                 parsing_error(state, "\"");
                 str_destroy(part);
+                str_destroy(attribute->key);
                 return NULL;
             }
             attribute->value = parse_name(state);
+            if (attribute->key == NULL) {
+                str_destroy(part);
+                str_destroy(attribute->key);
+                return NULL;
+            }
             if (next_char(state) != '"') {
                 parsing_error(state, "\"");
                 str_destroy(part);
+                str_destroy(attribute->key);
+                str_destroy(attribute->value);
                 return NULL;
             }
             if (next_char(state) != ']') {
                 parsing_error(state, "]");
                 str_destroy(part);
+                str_destroy(attribute->key);
+                str_destroy(attribute->value);
                 return NULL;
             }
             return part;
@@ -211,8 +226,12 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
     if (xpath == NULL) {
         if (state.error.code == PARSING_SUCCESS) {
             if (!vec_push_back(result, &node)) {
+                str_destroy(attribute.key);
+                str_destroy(attribute.value);
                 return -1;
             }
+            str_destroy(attribute.key);
+            str_destroy(attribute.value);
             return 0;
         }
         else {
@@ -238,9 +257,13 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
             }
         }
         str_destroy(xpath);
+        str_destroy(attribute.key);
+        str_destroy(attribute.value);
     }
     else {
         str_destroy(xpath);
+        str_destroy(attribute.key);
+        str_destroy(attribute.value);
         return 0;
     }
 

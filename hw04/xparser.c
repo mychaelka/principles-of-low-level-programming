@@ -175,6 +175,10 @@ static bool add_to_text(struct parsing_state *state, mchar **text,
     int c = peek_char(state);
 
     if (normalize) {
+        if (c == '>' || c == '<' || c == '&' || c == '"' || c == '\'') {
+            return false;
+        }
+
         if (isspace(c)) {
             *space = true;
             next_char(state);
@@ -255,6 +259,21 @@ mchar *parse_value(struct parsing_state *state)
 /*****************************************************************************
  *  ATTRIBUTES
  *****************************************************************************/
+bool attribute_exists(struct vector* keys, mchar* key)
+{
+    if (keys == NULL) {
+        return true;
+    }
+
+    for (size_t i = 0; i < vec_size(keys); i++) {
+        mchar** current_attribute = vec_get(keys, i);
+        if (strcmp(key, *current_attribute) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 static bool parse_attribute(struct parsing_state *state,
                             struct vector *keys, struct vector *values)
@@ -266,13 +285,17 @@ static bool parse_attribute(struct parsing_state *state,
         return false;
     }
 
+    if (attribute_exists(keys, key)) {
+        str_destroy(key);
+        return false;
+    }
+
     bool success = parse_equals(state);
     mchar* value = parse_value(state);
     if (value == NULL) {
         str_destroy(key);
         return false;
     }
-    //success = success && value != NULL;
 
     if (!success) {
         str_destroy(key);
@@ -291,8 +314,6 @@ static bool parse_attribute(struct parsing_state *state,
         }
     }
 
-    //str_destroy(key);
-    //str_destroy(value);
     return success;
 }
 
