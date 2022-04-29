@@ -268,7 +268,7 @@ int descending(struct parsing_state state, struct node* node, bool xml, FILE *fi
         if (attribute_equals(attribute.key, attribute.value, node->keys, node->values)) {
             if (tree_descent(state, node, xpath, xml, file, result) == 0) {
                 if (vec_size(result) == 0) {
-                    vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+                    free_vector(result);
                     str_destroy(xpath);
                     return 0;
                 }
@@ -276,30 +276,33 @@ int descending(struct parsing_state state, struct node* node, bool xml, FILE *fi
                     mchar *name = str_create("result");
                     struct node* res = node_create(name, NULL, NULL, NULL, result);
                     print_subtree_xml(res, file, 0);
-                    //free(res);
+                    res->children = NULL;  // otherwise node_destroy would result in double free() error
+                    node_destroy(res);
                 }
                 else if (xml){
                     struct node **res = vec_get(result, 0);
                     print_subtree_xml(*res, file, 0);
+                    *res = NULL;
                 }
                 else {
                     for (size_t i = 0; i < vec_size(result); i++) {
                         struct node **res = vec_get(result, i);
                         print_subtree(*res, file);
+                        *res = NULL;
                     }
                 }
-                //vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+                free_vector(result);
                 str_destroy(xpath);
                 return 0;
             }
 
-            vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+            free_vector(result);
             str_destroy(xpath);
             return -1;
         }
     }
 
-    vec_destroy(result, DESTRUCTOR(node_ptr_destroy));
+    free_vector(result);
     str_destroy(xpath);
     return 0;
 }
