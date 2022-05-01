@@ -114,17 +114,6 @@ mchar *parse_word(struct parsing_state *state, predicate start,
     return NULL;
 }
 
-mchar *parse_entity(struct parsing_state *state, predicate start,
-                    predicate rest, const char *error_message)
-{
-    assert(state != NULL);
-    assert(start != NULL);
-    assert(rest != NULL);
-    assert(error_message != NULL);
-
-
-
-}
 /*****************************************************************************
  *  NAME
  *****************************************************************************/

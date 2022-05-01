@@ -23,7 +23,7 @@ struct parsing_state read_xpath(const char* xpath);
 
 int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file, struct vector* result);
 
-int start_descent(struct parsing_state state, struct node* node, bool xml, FILE *file);
+int find_node(struct parsing_state state, struct node* node, bool xml, FILE *file);
 
 void print_attributes(struct node* node, FILE *file);
 

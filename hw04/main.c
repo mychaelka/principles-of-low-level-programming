@@ -132,7 +132,7 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        if (start_descent(state, node, args.xml, out) != 0) {
+        if (find_node(state, node, args.xml, out) != 0) {
             node_destroy(node);
             fclose(out);
             return EXIT_FAILURE;
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
         fclose(out);
 
     } else {
-        if (start_descent(state, node, args.xml, stdout) != 0) {
+        if (find_node(state, node, args.xml, stdout) != 0) {
             node_destroy(node);
             return EXIT_FAILURE;
         }

@@ -280,6 +280,14 @@ bool attribute_equals(const mchar* key, const mchar* value,
     return false;
 }
 
+bool conditions_satisfied(mchar* xpath, mchar* name, struct attribute attribute,
+        struct vector* keys, struct vector* values, size_t index, size_t wanted_index)
+{
+    return (strcmp(xpath, name) == 0 || strcmp(xpath, "*") == 0)
+           && (attribute_equals(attribute.key, attribute.value, keys, values)
+           && (index == 0 || index == wanted_index));
+}
+
 int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file, struct vector* result)
 {
     assert(result != NULL);
@@ -308,15 +316,12 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node** child = vec_get(node->children, i);
 
-            if (strcmp(xpath, (*child)->name) == 0 || strcmp(xpath, "*") == 0) {
-
-                if (attribute_equals(attribute.key, attribute.value,
-                                     (*child)->keys, (*child)->values)
-                                     && (index == 0 || index == i + 1)) {
-                    if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
-                        fprintf(stderr, "%s\n", state.error.message);
-                        return -1;
-                    }
+            if (conditions_satisfied(xpath, (*child)->name, attribute,
+                                     (*child)->keys, (*child)->values,
+                                     index, i + 1)) {
+                if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
+                    fprintf(stderr, "%s\n", state.error.message);
+                    return -1;
                 }
             }
         }
@@ -327,7 +332,7 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
     return 0;
 }
 
-int start_descent(struct parsing_state state, struct node* node, bool xml, FILE *file)
+int find_node(struct parsing_state state, struct node* node, bool xml, FILE *file)
 {
     struct vector* result = vec_create(sizeof(struct node*));
     if (result == NULL) {
@@ -344,45 +349,38 @@ int start_descent(struct parsing_state state, struct node* node, bool xml, FILE 
         return -1;
     }
 
-    if (strcmp(xpath, node->name) == 0 || strcmp(xpath, "*") == 0) {
-        if (attribute_equals(attribute.key, attribute.value, node->keys, node->values)
-            && (index == 0 || index == 1)) {
-            if (tree_descent(state, node, xpath, xml, file, result) == 0) {
-                if (vec_size(result) == 0) {
-                    free_vector(result);
-                    str_destroy(xpath);
-                    return 0;
-                }
-                if (xml && vec_size(result) > 1) {
-                    mchar *name = str_create("result");
-                    struct node* res = node_create(name, NULL, NULL, NULL, result);
-                    print_subtree_xml(res, file, 0);
-                    res->children = NULL;  // otherwise node_destroy would result in double free() error
-                    node_destroy(res);
-                }
-                else if (xml){
-                    struct node **res = vec_get(result, 0);
-                    print_subtree_xml(*res, file, 0);
-                    *res = NULL;
-                }
-                else {
-                    for (size_t i = 0; i < vec_size(result); i++) {
-                        struct node **res = vec_get(result, i);
-                        print_subtree(*res, file);
-                        *res = NULL;
-                    }
-                }
-                free_vector(result);
-                str_destroy(xpath);
-                return 0;
-            }
-
+    if (conditions_satisfied(xpath, node->name, attribute,
+                             node->keys, node->values,
+                             index, 1)) {
+        if (tree_descent(state, node, xpath, xml, file, result) != 0) {
             free_vector(result);
             str_destroy(xpath);
             return -1;
         }
-    }
 
+        if (vec_size(result) == 0) {
+            free_vector(result);
+            str_destroy(xpath);
+            return 0;
+        }
+        if (xml && vec_size(result) > 1) {
+            mchar *name = str_create("result");
+            struct node* res = node_create(name, NULL, NULL, NULL, result);
+            print_subtree_xml(res, file, 0);
+            res->children = NULL;  // otherwise node_destroy would result in double free() error
+            node_destroy(res);
+        }
+
+        for (size_t i = 0; i < vec_size(result); i++) {
+            struct node **res = vec_get(result, i);
+            if (xml) {
+                print_subtree_xml(*res, file, 0);
+            } else {
+                print_subtree(*res, file);
+            }
+            *res = NULL;
+        }
+    }
     free_vector(result);
     str_destroy(xpath);
     return 0;
