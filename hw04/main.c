@@ -17,6 +17,7 @@ struct arguments
     bool xml;
 };
 
+
 int load_arguments(int argc, char **argv, struct arguments *args)
 {
     for (int opt = 1; opt < argc; opt++) {
@@ -60,7 +61,7 @@ int load_arguments(int argc, char **argv, struct arguments *args)
             continue;
         }
 
-        if (strcmp(argv[opt], "-t") == 0 || strcmp(argv[opt], "--text") == 0) { //x and t options can be used multiple times
+        if (strcmp(argv[opt], "-t") == 0 || strcmp(argv[opt], "--text") == 0) {
             if (args->xml) {
                 fprintf(stderr, "Options '--text' and '--xml' are incompatible\n");
                 return -1;
@@ -131,7 +132,7 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        if (descending(state, node, args.xml, out) != 0) {
+        if (start_descent(state, node, args.xml, out) != 0) {
             node_destroy(node);
             fclose(out);
             return EXIT_FAILURE;
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
         fclose(out);
 
     } else {
-        if (descending(state, node, args.xml, stdout) != 0) {
+        if (start_descent(state, node, args.xml, stdout) != 0) {
             node_destroy(node);
             return EXIT_FAILURE;
         }
