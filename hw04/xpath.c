@@ -357,6 +357,8 @@ int find_node(struct parsing_state state, struct node* node, bool xml, FILE *fil
             if (tree_descent(state, node, xpath, xml, file, result) != 0) {
                 free_vector(result);
                 str_destroy(xpath);
+                str_destroy(attribute.key);
+                str_destroy(attribute.value);
                 return -1;
             }
         }
@@ -364,6 +366,8 @@ int find_node(struct parsing_state state, struct node* node, bool xml, FILE *fil
         if (vec_size(result) == 0) {
             free_vector(result);
             str_destroy(xpath);
+            str_destroy(attribute.key);
+            str_destroy(attribute.value);
             return 0;
         }
         if (xml && vec_size(result) > 1) {
@@ -373,18 +377,21 @@ int find_node(struct parsing_state state, struct node* node, bool xml, FILE *fil
             res->children = NULL;  // otherwise node_destroy would result in double free() error
             node_destroy(res);
         }
-
-        for (size_t i = 0; i < vec_size(result); i++) {
-            struct node **res = vec_get(result, i);
-            if (xml) {
-                print_subtree_xml(*res, file, 0);
-            } else {
-                print_subtree(*res, file);
+        else {
+            for (size_t i = 0; i < vec_size(result); i++) {
+                struct node **res = vec_get(result, i);
+                if (xml) {
+                    print_subtree_xml(*res, file, 0);
+                } else {
+                    print_subtree(*res, file);
+                }
+                *res = NULL;
             }
-            *res = NULL;
         }
     }
     free_vector(result);
     str_destroy(xpath);
+    str_destroy(attribute.key);
+    str_destroy(attribute.value);
     return 0;
 }
