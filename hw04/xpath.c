@@ -280,12 +280,11 @@ bool attribute_equals(const mchar* key, const mchar* value,
     return false;
 }
 
-bool conditions_satisfied(mchar* xpath, mchar* name, struct attribute attribute,
-        struct vector* keys, struct vector* values, size_t index, size_t wanted_index)
+bool attribute_satisfies(mchar* xpath, mchar* name, struct attribute attribute,
+        struct vector* keys, struct vector* values)
 {
     return (strcmp(xpath, name) == 0 || strcmp(xpath, "*") == 0)
-           && (attribute_equals(attribute.key, attribute.value, keys, values)
-           && (index == 0 || index == wanted_index));
+           && (attribute_equals(attribute.key, attribute.value, keys, values));
 }
 
 int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bool xml, FILE *file, struct vector* result)
@@ -313,15 +312,18 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
     }
 
     if (node->children != NULL) {
+        size_t child_idx = 0;
         for (size_t i = 0; i < vec_size(node->children); i++) {
             struct node** child = vec_get(node->children, i);
 
-            if (conditions_satisfied(xpath, (*child)->name, attribute,
-                                     (*child)->keys, (*child)->values,
-                                     index, i + 1)) {
-                if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
-                    fprintf(stderr, "%s\n", state.error.message);
-                    return -1;
+            if (attribute_satisfies(xpath, (*child)->name, attribute,
+                                     (*child)->keys, (*child)->values)) {
+                child_idx += 1;
+                if (index == 0 || index == child_idx) {
+                    if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
+                        fprintf(stderr, "%s\n", state.error.message);
+                        return -1;
+                    }
                 }
             }
         }
