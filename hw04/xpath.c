@@ -319,7 +319,7 @@ int tree_descent(struct parsing_state state, struct node* node, mchar* xpath, bo
             if (attribute_satisfies(xpath, (*child)->name, attribute,
                                      (*child)->keys, (*child)->values)) {
                 child_idx += 1;
-                if (index == 0 || index == child_idx) {
+                if (index == 0 || index == child_idx) {  // if index is set to 0, no index was found in xpath
                     if (tree_descent(state, *child, xpath, xml, file, result) != 0) {
                         fprintf(stderr, "%s\n", state.error.message);
                         return -1;
@@ -351,13 +351,14 @@ int find_node(struct parsing_state state, struct node* node, bool xml, FILE *fil
         return -1;
     }
 
-    if (conditions_satisfied(xpath, node->name, attribute,
-                             node->keys, node->values,
-                             index, 1)) {
-        if (tree_descent(state, node, xpath, xml, file, result) != 0) {
-            free_vector(result);
-            str_destroy(xpath);
-            return -1;
+    if (attribute_satisfies(xpath, node->name, attribute,
+                             node->keys, node->values)) {
+        if (index == 0 || index == 1) {
+            if (tree_descent(state, node, xpath, xml, file, result) != 0) {
+                free_vector(result);
+                str_destroy(xpath);
+                return -1;
+            }
         }
 
         if (vec_size(result) == 0) {
