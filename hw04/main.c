@@ -1,4 +1,3 @@
-#include <getopt.h>
 #include <string.h>
 
 #include "xpath.h"
