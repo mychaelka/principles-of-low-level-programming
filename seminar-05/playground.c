@@ -66,30 +66,19 @@ size_t string_count_char(const char *string, char ch)
 
 size_t string_count_substr(const char *original, const char *substring)
 {
-    size_t counter = 0;
-    size_t length_substring = 0;
-
-    //while (*substring != '\0') {
-    //    length_substring += 1;
-    //    substring++;
-    //}
-
-    //substring -= length_substring + 1;
 
     if (*original == '\0' || *substring == '\0') {
         return 0;
     }
 
-    while (*original != '\0') {
+    size_t counter = 0;
+    const char *current = original;
 
-        if (strstr(original, substring)) {
-            counter += 1;
-            original += 4;
-            continue;
-        }
-        original += 1;
-
+    while ((current = strstr(current, substring)) != NULL) {
+        counter++;
+        current++;
     }
+
     return counter;
 }
 
