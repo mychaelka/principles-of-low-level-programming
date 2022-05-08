@@ -1,0 +1,588 @@
+# file: cmake_install.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::r-x
+other::r-x
+
+# file: checkperms-tests
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: Makefile
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: checkperms
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeFiles
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: checkperms-tests.dir
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: DependInfo.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: compiler_depend.ts
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: link.txt
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: compiler_depend.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: build.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: compiler_depend.internal
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: tests
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: cut_main_runner.c.o.d
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: tests.c.o.d
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: cut_main_runner.c.o
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: tests.c.o
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: sample_printer.c.o
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: cmake_clean.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: sample_printer.c.o.d
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: progress.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: depend.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: flags.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeOutput.log
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: Makefile.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: CMakeDirectoryInformation.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: 3.23.1
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CompilerIdC
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeCCompilerId.c
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: a.out
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: tmp
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeCXXCompiler.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::r--
+other::r--
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeSystem.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::r--
+other::r--
+
+# file: CompilerIdCXX
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeCXXCompilerId.cpp
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: a.out
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: tmp
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeDetermineCompilerABI_CXX.bin
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeDetermineCompilerABI_C.bin
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: CMakeCCompiler.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::r--
+other::r--
+
+# file: TargetDirectories.txt
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: Makefile2
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: progress.marks
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: cmake.check_cache
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: CMakeTmp
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: checkperms.dir
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: main.c.o
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: DependInfo.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: ..
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::r-x
+
+# file: compiler_depend.ts
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: link.txt
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: compiler_depend.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: build.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: compiler_depend.internal
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: sample_printer.c.o
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: cmake_clean.cmake
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: sample_printer.c.o.d
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: progress.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: depend.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: flags.make
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: main.c.o.d
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: CMakeCache.txt
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
+# file: file.txt
+# owner: myska
+# group: myska
+user::rw-
+group::rw-
+other::r--
+
