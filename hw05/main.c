@@ -280,6 +280,7 @@ int main(int argc, char **argv) {
     struct arguments args = {0, "", ""};
 
     if (!load_arguments(argc, argv, &args)) {
+        puts("Arguments need to be passed in format \"<-e|-i> <PERMISSIONS_FILE> [DIRECTORY_TO_CHECK]\"");
         return EXIT_FAILURE;
     }
 
