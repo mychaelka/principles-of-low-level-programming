@@ -25,45 +25,13 @@ struct arguments {
     char dir[256];
 };
 
-struct perms {
-    bool r;
-    bool w;
-    bool x;
-};
-
-struct flags {
-    bool setuid;
-    bool setgid;
-    bool sticky_bit;
-};
-
 struct file_info {
     char filename[256];
     char owner[256];
     char group[256];
     unsigned int mask;
-    struct perms user_perms;
-    struct perms group_perms;
-    struct perms other_perms;
-    struct flags flags;
 };
 
-
-int is_file(const char *path)
-{
-    struct stat path_stat;
-    stat(path, &path_stat);
-    return S_ISREG(path_stat.st_mode);
-}
-
-int is_directory(const char *path)
-{
-    struct stat path_stat;
-    stat(path, &path_stat);
-    return S_ISDIR(path_stat.st_mode)
-           && strcmp(path, ".") != 0
-           && strcmp(path, "..") != 0;
-}
 
 bool load_arguments(int argc, char **argv, struct arguments *args)
 {
@@ -73,13 +41,21 @@ bool load_arguments(int argc, char **argv, struct arguments *args)
     }
     args->file = optarg;
 
-    if (argc == 4) {
-        strcpy(args->dir, argv[3]);
-    } else {
-        args->dir[0] = '.';
-        //getcwd(args->dir, sizeof(args->dir));
+    if (optind == argc - 1) {
+        strcpy(args->dir, argv[optind]);
     }
-    return true;
+
+    if (optind == argc) {
+        args->dir[0] = '.';
+        return true;
+    }
+    if (optind == argc - 1) {
+        strcpy(args->dir, argv[optind]);
+        return true;
+    }
+
+    fputs("Too many arguments\n", stderr);
+    return false;
 }
 
 char* concat_name(char* path, char* subdir)
@@ -97,7 +73,7 @@ char* concat_name(char* path, char* subdir)
     return subdir_name;
 }
 
-void read_info(FILE* file, struct file_info* info)  // TODO: delete redundant
+void read_info(FILE* file, struct file_info* info)
 {
     fscanf(file, "# file: %s\n", info->filename);
     fscanf(file, "# owner: %s\n", info->owner);
@@ -111,10 +87,6 @@ void read_info(FILE* file, struct file_info* info)  // TODO: delete redundant
     flags[1] == 's' ? mask |= S_ISGID : mask;
     flags[2] == 't' ? mask |= S_ISVTX : mask;
 
-    info->flags.setuid = flags[0] == 's';
-    info->flags.setgid = flags[1] == 's';
-    info->flags.sticky_bit = flags[2] == 't';
-
     char usr[3];
     char grp[3];
     char othr[3];
@@ -123,25 +95,13 @@ void read_info(FILE* file, struct file_info* info)  // TODO: delete redundant
     fscanf(file, "group:: %s\n", grp);
     fscanf(file, "other:: %s\n", othr);
 
-    info->user_perms.r = usr[0] == 'r';
-    info->user_perms.w = usr[1] == 'w';
-    info->user_perms.x = usr[2] == 'x';
-
     usr[0] == 'r' ? mask |= S_IRUSR : mask;
     usr[1] == 'w' ? mask |= S_IWUSR : mask;
     usr[2] == 'x' ? mask |= S_IXUSR : mask;
 
-    info->group_perms.r = grp[0] == 'r';
-    info->group_perms.w = grp[1] == 'w';
-    info->group_perms.x = grp[2] == 'x';
-
     grp[0] == 'r' ? mask |= S_IRGRP : mask;
     grp[1] == 'w' ? mask |= S_IWGRP : mask;
     grp[2] == 'x' ? mask |= S_IXGRP : mask;
-
-    info->other_perms.r = othr[0] == 'r';
-    info->other_perms.w = othr[1] == 'w';
-    info->other_perms.x = othr[2] == 'x';
 
     othr[0] == 'r' ? mask |= S_IROTH : mask;
     othr[1] == 'w' ? mask |= S_IWOTH : mask;
@@ -215,6 +175,7 @@ bool directory_recursive_read(char *path, FILE *file)
 
     if (stat(path, &fstats) == -1) {
         perror("stat");
+        closedir(dir);
         return false;
     }
     formatted_output(&fstats, file, path);
@@ -222,6 +183,7 @@ bool directory_recursive_read(char *path, FILE *file)
     int entries;
     if ((entries = scandir(path, &entrylist, NULL, alphasort)) == -1) {
         perror("scandir");
+        closedir(dir);
         return false;
     }
 
@@ -229,23 +191,37 @@ bool directory_recursive_read(char *path, FILE *file)
         entry = entrylist[i];
         char* subdir_name = concat_name(path, entry->d_name);
         if (subdir_name == NULL) {
-            perror("subdirectory name");
+            fputs("Could not parse subdirectory name\n", stderr);
+            free(entry);
+            free(entrylist);
+            closedir(dir);
             return false;
         }
 
         if (stat(subdir_name, &fstats) == -1) {
             perror("stat");
+            free(subdir_name);
+            free(entry);
+            free(entrylist);
+            closedir(dir);
             return false;
         }
 
+        if (!S_ISREG(fstats.st_mode) && !S_ISDIR(fstats.st_mode)) {
+            perror("ISREG || ISDIR");
+            free(subdir_name);
+            free(entry);
+            free(entrylist);
+            closedir(dir);
+            return false;
+        }
         if (strcmp(entry->d_name, "..") != 0
             && strcmp(entry->d_name, ".") != 0
-            && is_directory(subdir_name)) {
+            && S_ISDIR(fstats.st_mode)) {
             directory_recursive_read(subdir_name, file);
-        } else if (is_file(subdir_name)) {
+        } else if (S_ISREG(fstats.st_mode)) {
             formatted_output(&fstats, file, subdir_name);
         }
-        // TODO: add error if file is not regular
         free(subdir_name);
         free(entry);
     }
@@ -268,11 +244,7 @@ bool change_mods(FILE *file)
                 "",
                 "",
                 "",
-                0,
-                {false, false, false},
-                {false, false, false},
-                {false, false, false},
-                {false, false, false}};
+                0};
 
         read_info(file, &info);
         stat(info.filename, &fstats);
@@ -304,19 +276,10 @@ bool change_mods(FILE *file)
 
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        fprintf(stderr, "The PERMISSIONS_FILE argument is required.\n");
-        return EXIT_FAILURE; // TODO: change not to be dependent on argc
-    }
-    if (argc > 4) {
-        fprintf(stderr, "Too many arguments.\n");
-        return EXIT_FAILURE;
-    }
 
     struct arguments args = {0, "", ""};
 
     if (!load_arguments(argc, argv, &args)) {
-        fprintf(stderr, "Failed to load arguments.\n");
         return EXIT_FAILURE;
     }
 
@@ -328,7 +291,10 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        directory_recursive_read(args.dir, permissions_file);
+        if (!directory_recursive_read(args.dir, permissions_file)) {
+            fclose(permissions_file);
+            return EXIT_FAILURE;
+        }
 
     } else {
         permissions_file = fopen(args.file, "r");
@@ -343,6 +309,5 @@ int main(int argc, char **argv) {
     }
 
     fclose(permissions_file);
-
     return EXIT_SUCCESS;
 }
