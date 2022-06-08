@@ -128,7 +128,7 @@ TEST(export)
      *          chmod -R u=rwX pb071-hw05.tmp.*
      *          rm -rf pb071-hw05.tmp.*
      * */
-    //ASSERT(test_env_teardown(envd));
+     ASSERT(test_env_teardown(envd));
 }
 
 // #desc: Import do aktuálního adresáře
@@ -173,7 +173,7 @@ TEST(import)
      * ‹test_env_setup()› to prevent it from being deleted, so you can inspect
      * its contents after the test. It will be named
      * ‹pb071-hw05.tmp.[SOMETHING RANDOM]›. */
-    ASSERT(test_env_teardown(envd));
+    //ASSERT(test_env_teardown(envd));
 }
 
 /* To recapitulate, when writing your own tests using the above framework,

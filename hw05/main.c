@@ -260,7 +260,10 @@ bool change_mods(FILE *file)
                 0};
 
         read_info(file, &info);
-        stat(info.filename, &fstats);
+        if (stat(info.filename, &fstats) != 0) {
+            fputs("Could not load file stats\n", stderr);
+            return false;
+        }
 
         struct passwd* user_info = getpwuid(fstats.st_uid);
         struct group* group_info = getgrgid(fstats.st_gid);
@@ -305,17 +308,11 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        // TODO: change directory to current
-        // TODO: formatted print on . and then recursive read
         if (chdir(args.dir) != 0) {
             fputs("Could not change directory\n", stderr);
             return EXIT_FAILURE;
         }
 
-        //struct stat fstats;
-        //stat(".", &fstats);
-
-        //formatted_output(&fstats, permissions_file, ".");
         if (!directory_recursive_read(".", permissions_file, true)) {
             fclose(permissions_file);
             return EXIT_FAILURE;
@@ -325,6 +322,11 @@ int main(int argc, char **argv) {
         permissions_file = fopen(args.file, "r");
         if (!permissions_file) {
             perror("fopen");
+            return EXIT_FAILURE;
+        }
+
+        if (chdir(args.dir) != 0) {
+            fputs("Could not change directory\n", stderr);
             return EXIT_FAILURE;
         }
 
