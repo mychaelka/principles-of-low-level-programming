@@ -114,7 +114,7 @@ TEST(export)
     /* The final part deals with cleanup. First, we need to unlink the temporary
      * file. If you want to inspect what your program has created, simply
      * comment out the next line. The file will remain as ‹test-export.txt›. */
-    unlink(export_path);
+    //unlink(export_path);
 
     /* Finally, to undo the temporary structure created by ‹test_env_setup()›,
      * we use ‹test_env_teardown()›. This function will attempt to remove
@@ -128,7 +128,7 @@ TEST(export)
      *          chmod -R u=rwX pb071-hw05.tmp.*
      *          rm -rf pb071-hw05.tmp.*
      * */
-    ASSERT(test_env_teardown(envd));
+    //ASSERT(test_env_teardown(envd));
 }
 
 // #desc: Import do aktuálního adresáře
