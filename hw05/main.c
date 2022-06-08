@@ -65,6 +65,10 @@ char* concat_name(char* path, char* subdir)
         return NULL;
     }
     strcpy(subdir_name, path);
+    if (strcmp(path, "") == 0) {
+        strcat(subdir_name, subdir);
+        return subdir_name;
+    }
     if (path[strlen(path) - 1] != '/') {  // path is not ended by slash
         strcat(subdir_name, "/");
     }
@@ -80,16 +84,16 @@ void read_info(FILE* file, struct file_info* info)
     fscanf(file, "# group: %s\n", info->group);
 
     unsigned int mask = 0;
-    char flags[3];
+    char flags[3] = {' ', ' ', ' '};
     fscanf(file, "# flags: %s\n", flags);
 
     flags[0] == 's' ? mask |= S_ISUID : mask;
     flags[1] == 's' ? mask |= S_ISGID : mask;
     flags[2] == 't' ? mask |= S_ISVTX : mask;
 
-    char usr[3];
-    char grp[3];
-    char othr[3];
+    char usr[3] = {' ', ' ', ' '};
+    char grp[3] = {' ', ' ', ' '};
+    char othr[3] = {' ', ' ', ' '};
 
     fscanf(file, "user:: %s\n", usr);
     fscanf(file, "group:: %s\n", grp);
@@ -146,8 +150,11 @@ void print_flags(struct stat* fstats, FILE* file)
     fputs("\n", file);
 }
 
-void formatted_output(struct stat* fstats, FILE* file, char* path)
+void formatted_output(struct stat* fstats, FILE* file, char* path, bool initial)
 {
+    if (!initial) {
+        fputs("\n", file);
+    }
     struct passwd* user_info = getpwuid(fstats->st_uid);
     struct group* group_info = getgrgid(fstats->st_gid);
     fprintf(file,"# file: %s\n", path);
@@ -159,10 +166,9 @@ void formatted_output(struct stat* fstats, FILE* file, char* path)
     print_permissions(fstats, USER, file);
     print_permissions(fstats, GROUP, file);
     print_permissions(fstats, OTHER, file);
-    fputs("\n", file);
 }
 
-bool directory_recursive_read(char *path, FILE *file)
+bool directory_recursive_read(char *path, FILE *file, bool initial)
 {
     struct dirent *entry;
     struct stat fstats;
@@ -178,7 +184,7 @@ bool directory_recursive_read(char *path, FILE *file)
         closedir(dir);
         return false;
     }
-    formatted_output(&fstats, file, path);
+    formatted_output(&fstats, file, path, initial);
     struct dirent **entrylist;
     int entries;
     if ((entries = scandir(path, &entrylist, NULL, alphasort)) == -1) {
@@ -189,7 +195,14 @@ bool directory_recursive_read(char *path, FILE *file)
 
     for (int i = 0; i < entries; i++) {
         entry = entrylist[i];
-        char* subdir_name = concat_name(path, entry->d_name);
+        char* subdir_name;
+        if (strcmp(path, ".") != 0) {
+            subdir_name = concat_name(path, entry->d_name);
+        }
+        else {
+            subdir_name = concat_name("", entry->d_name);
+        }
+
         if (subdir_name == NULL) {
             fputs("Could not parse subdirectory name\n", stderr);
             free(entry);
@@ -218,9 +231,9 @@ bool directory_recursive_read(char *path, FILE *file)
         if (strcmp(entry->d_name, "..") != 0
             && strcmp(entry->d_name, ".") != 0
             && S_ISDIR(fstats.st_mode)) {
-            directory_recursive_read(subdir_name, file);
+            directory_recursive_read(subdir_name, file, false);
         } else if (S_ISREG(fstats.st_mode)) {
-            formatted_output(&fstats, file, subdir_name);
+            formatted_output(&fstats, file, subdir_name, false);
         }
         free(subdir_name);
         free(entry);
@@ -288,11 +301,22 @@ int main(int argc, char **argv) {
     if (args.opt == 'e') {
         permissions_file = fopen(args.file, "w");
         if (!permissions_file) {
-            perror("fopen");
+            fputs("Could not open permissions file\n", stderr);
             return EXIT_FAILURE;
         }
 
-        if (!directory_recursive_read(args.dir, permissions_file)) {
+        // TODO: change directory to current
+        // TODO: formatted print on . and then recursive read
+        if (chdir(args.dir) != 0) {
+            fputs("Could not change directory\n", stderr);
+            return EXIT_FAILURE;
+        }
+
+        //struct stat fstats;
+        //stat(".", &fstats);
+
+        //formatted_output(&fstats, permissions_file, ".");
+        if (!directory_recursive_read(".", permissions_file, true)) {
             fclose(permissions_file);
             return EXIT_FAILURE;
         }
