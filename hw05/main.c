@@ -22,7 +22,7 @@
 struct arguments {
     int opt;
     char* file;
-    char dir[256];
+    char dir[PATH_MAX];
 };
 
 struct file_info {
@@ -249,7 +249,7 @@ int file_peek(FILE* file)
     return c == EOF ? EOF : ungetc(c, file);
 }
 
-bool change_mods(FILE *file)
+bool change_mods(FILE *file, char* dir)
 {
     while (file_peek(file) != EOF) {
         struct stat fstats;
@@ -260,7 +260,21 @@ bool change_mods(FILE *file)
                 0};
 
         read_info(file, &info);
-        if (stat(info.filename, &fstats) != 0) {
+
+        char path[PATH_MAX];
+        strcpy(path, dir);
+
+        // concatenate full file name to path
+        if (strcmp(info.filename, ".") != 0) {
+            if (path[strlen(path) - 1] != '/') {
+                strcat(path, "/");
+            }
+            strcat(path, info.filename);
+        }
+
+        printf("PATH: %s\n", path);
+        if (stat(path, &fstats) != 0) {
+            fprintf(stderr, "Could not load file stats for file %s\n", path);
             fputs("Could not load file stats\n", stderr);
             return false;
         }
@@ -282,7 +296,7 @@ bool change_mods(FILE *file)
             continue;
         }
 
-        if (chmod(info.filename, info.mask) != 0) {
+        if (chmod(path, info.mask) != 0) {
             perror(strerror(errno));
             continue;
         }
@@ -292,9 +306,7 @@ bool change_mods(FILE *file)
 
 
 int main(int argc, char **argv) {
-
     struct arguments args = {0, "", ""};
-
     if (!load_arguments(argc, argv, &args)) {
         puts("Arguments need to be passed in format \"<-e|-i> <PERMISSIONS_FILE> [DIRECTORY_TO_CHECK]\"");
         return EXIT_FAILURE;
@@ -325,12 +337,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        if (chdir(args.dir) != 0) {
-            fputs("Could not change directory\n", stderr);
-            return EXIT_FAILURE;
-        }
-
-        if (!change_mods(permissions_file)) {
+        if (!change_mods(permissions_file, args.dir)) {
             return EXIT_FAILURE;
         }
     }

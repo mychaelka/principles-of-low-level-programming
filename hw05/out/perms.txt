@@ -1,0 +1,27 @@
+# file: .
+# owner: myska
+# group: myska
+user::rwx
+group::---
+other::---
+
+# file: dir
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::rwx
+
+# file: file
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::rwx
+
+# file: file2
+# owner: myska
+# group: myska
+user::rwx
+group::rwx
+other::rwx
