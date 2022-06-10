@@ -249,7 +249,7 @@ int file_peek(FILE* file)
     return c == EOF ? EOF : ungetc(c, file);
 }
 
-bool change_mods(FILE *file, char* dir)
+bool change_mods(FILE *file)
 {
     while (file_peek(file) != EOF) {
         struct stat fstats;
@@ -262,7 +262,8 @@ bool change_mods(FILE *file, char* dir)
         read_info(file, &info);
 
         char path[PATH_MAX];
-        strcpy(path, dir);
+        getcwd(path, PATH_MAX);
+        //printf("PATH1: %s\n", path);
 
         // concatenate full file name to path
         if (strcmp(info.filename, ".") != 0) {
@@ -272,7 +273,7 @@ bool change_mods(FILE *file, char* dir)
             strcat(path, info.filename);
         }
 
-        printf("PATH: %s\n", path);
+        //printf("PATH: %s\n", path);
         if (stat(path, &fstats) != 0) {
             fprintf(stderr, "Could not load file stats for file %s\n", path);
             fputs("Could not load file stats\n", stderr);
@@ -337,7 +338,12 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        if (!change_mods(permissions_file, args.dir)) {
+        if (chdir(args.dir) != 0) {
+            fputs("Could not change directory\n", stderr);
+            return EXIT_FAILURE;
+        }
+
+        if (!change_mods(permissions_file)) {
             return EXIT_FAILURE;
         }
     }
